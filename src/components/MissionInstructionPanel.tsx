@@ -308,10 +308,14 @@ export function MissionInstructionPanel({
           </button>
         )}
 
-        {/* Continue button for concept/observe steps without quiz */}
+        {/* Continue button for concept/observe steps without quiz.
+            Hidden when the step still requires the user to type a command —
+            those advance via Next once validation passes. */}
         {!isStepCompleted &&
           (isConceptStep || isObserveStep) &&
-          !currentStep.narrativeQuiz && (
+          !currentStep.narrativeQuiz &&
+          (!currentStep.expectedCommands ||
+            currentStep.expectedCommands.length === 0) && (
             <button
               onClick={onContinue}
               className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded transition-colors"

@@ -350,10 +350,13 @@ export function MissionCard({
             </div>
           )}
 
-          {/* Continue button for concept/observe steps (inline, not the big side button) */}
+          {/* Continue button for concept/observe steps (inline, not the big side button).
+              Hidden when the step still requires the user to type a command. */}
           {!isStepCompleted &&
             (isConceptStep || isObserveStep) &&
-            !currentStep.narrativeQuiz && (
+            !currentStep.narrativeQuiz &&
+            (!currentStep.expectedCommands ||
+              currentStep.expectedCommands.length === 0) && (
               <button
                 onClick={onContinue}
                 className="bg-green-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded hover:bg-green-700 transition-colors"

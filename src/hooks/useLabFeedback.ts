@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Terminal as XTerm } from "@xterm/xterm";
 import { useSimulationStore } from "@/store/simulationStore";
+import { substituteHardwareText } from "@/utils/hardwareTextSubstitution";
 
 /** Word-wrap text to fit within a given width */
 function wrapText(text: string, width: number): string[] {
@@ -40,6 +41,7 @@ export function useLabFeedback(
   const scenarioProgress = useSimulationStore(
     (state) => state.scenarioProgress,
   );
+  const systemType = useSimulationStore((state) => state.systemType);
   const previousScenarioId = useRef<string | null>(null);
   const completedScenariosRef = useRef<Set<string>>(new Set());
 
@@ -68,7 +70,10 @@ export function useLabFeedback(
       term.writeln(`\x1b[1;32m╚${"═".repeat(inner)}╝\x1b[0m`);
 
       // Word-wrap description to terminal width
-      const desc = activeScenario.description || "";
+      const desc = substituteHardwareText(
+        activeScenario.description || "",
+        systemType,
+      );
       for (const line of wrapText(desc, cols - 1)) {
         term.writeln(`\x1b[36m${line}\x1b[0m`);
       }
@@ -117,5 +122,12 @@ export function useLabFeedback(
     } else {
       previousScenarioId.current = null;
     }
-  }, [activeScenario, scenarioProgress, isReady, selectedNode, term]);
+  }, [
+    activeScenario,
+    scenarioProgress,
+    isReady,
+    selectedNode,
+    term,
+    systemType,
+  ]);
 }
