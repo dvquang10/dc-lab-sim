@@ -1,0 +1,436 @@
+{
+  "scenarios": [
+    {
+      "id": "aio-d1-bcm-tour",
+      "domain": 1,
+      "title": "First Login: BCM Cluster Tour",
+      "narrative": {
+        "hook": "Welcome to your new role as an AI Operations engineer. Today is BCM day-one.",
+        "setting": "You've just SSH'd into the head node of a 32-node H100 cluster managed by NVIDIA Base Command Manager. Before you touch any production workloads, your team lead wants you to confirm the head node is healthy, both head nodes are in sync, and you can navigate the BCM shell.",
+        "resolution": "You've validated the BCM head node, confirmed HA sync, and toured cmsh and Base View. You now know where to look first whenever a cluster-level issue is reported."
+      },
+      "commandFamilies": ["bcm-tools"],
+      "estimatedMinutes": 12,
+      "difficulty": "beginner",
+      "tier": 1,
+      "skippable": false,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "concept",
+          "situation": "Your lead asks you to confirm head-node HA before doing anything else.",
+          "task": "Verify head-node High Availability",
+          "expectedCommands": ["cmha status"],
+          "hints": ["Run: cmha status"],
+          "validation": { "type": "command", "command": "cmha" },
+          "conceptContent": "BCM clusters run two head nodes (active + passive). cmha status shows which one is active, the last config-sync timestamp, and the health of replication.\n\nIf HA is broken, every other diagnostic becomes unreliable — config changes you make may not survive a failover.",
+          "tips": [
+            "Watch the 'last sync' column — anything more than a few minutes old is a red flag"
+          ]
+        },
+        {
+          "id": "step-2",
+          "type": "observe",
+          "situation": "Your lead opens cmsh interactively so you can see how it's structured.",
+          "task": "Tour cmsh modes",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": { "type": "none" },
+          "observeCommand": "cmsh -c 'main; help'",
+          "conceptContent": "cmsh is the BCM shell. Inside it you switch between MODES like device, partition, network, category, softwareimage. Each mode scopes the commands available."
+        },
+        {
+          "id": "step-3",
+          "type": "concept",
+          "situation": "List all compute nodes in the cluster and their up/down status.",
+          "task": "Inventory compute nodes",
+          "expectedCommands": ["cmsh -c 'device; list'"],
+          "hints": ["cmsh -c 'device; list'"],
+          "validation": { "type": "command", "command": "cmsh" },
+          "conceptContent": "device mode is where you manage compute, head, login, and switch nodes. `list` gives you a quick inventory with status icons.",
+          "quiz": {
+            "question": "Which cmsh mode would you use to change which software image a compute node boots from?",
+            "options": ["network", "device", "partition", "monitoring"],
+            "correctIndex": 1,
+            "explanation": "Device mode owns per-node settings, including the software image assignment. The image itself is built via cm-create-image and selected per node (or per category) in device mode."
+          }
+        },
+        {
+          "id": "step-4",
+          "type": "concept",
+          "situation": "Your lead reminds you that day-to-day overview is done in Base View, the web UI.",
+          "task": "Open Base View",
+          "expectedCommands": [],
+          "hints": ["Base View lives on the head node at https://<head>:8081"],
+          "validation": { "type": "none" },
+          "conceptContent": "Base View is the BCM web dashboard. New operators usually live here for cluster overview, GPU heatmaps, workload visibility, and click-through configuration. Power users drop to cmsh for scripted/automated changes."
+        }
+      ]
+    },
+    {
+      "id": "aio-d1-provision-node",
+      "domain": 1,
+      "title": "Provisioning a New H100 Compute Node",
+      "narrative": {
+        "hook": "A new H100 chassis just landed in the rack. Time to bring it into the cluster.",
+        "setting": "The hardware team racked and cabled a new compute node, node-h100-33. PXE is configured. Your job is to add it to BCM, assign it to the gpu-compute category so it picks up the right software image, and watch the provisioning.",
+        "resolution": "The node booted from the provisioning image, completed install, and is now visible in cmsh as state UP and ready to accept Slurm jobs."
+      },
+      "commandFamilies": ["bcm-tools"],
+      "estimatedMinutes": 15,
+      "difficulty": "intermediate",
+      "tier": 2,
+      "skippable": false,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "concept",
+          "situation": "Add the new node to BCM via cmsh in non-interactive mode.",
+          "task": "Add node-h100-33 to BCM",
+          "expectedCommands": [
+            "cmsh -c 'device; add physicalnode node-h100-33; commit'"
+          ],
+          "hints": [
+            "Use device mode, then `add physicalnode <name>` and commit"
+          ],
+          "validation": { "type": "command", "command": "cmsh" },
+          "conceptContent": "Adding a physical node in cmsh registers it in BCM's database. Until you commit, the change is staged in your session. After commit, the entry is persisted and replicated to the passive head."
+        },
+        {
+          "id": "step-2",
+          "type": "concept",
+          "situation": "Assign the new node to the gpu-compute category so it inherits the H100 software image.",
+          "task": "Set category to gpu-compute",
+          "expectedCommands": [
+            "cmsh -c 'device; use node-h100-33; set category gpu-compute; commit'"
+          ],
+          "hints": [
+            "Inside device mode, `use <node>` selects it, then `set category gpu-compute`"
+          ],
+          "validation": { "type": "command", "command": "cmsh" },
+          "conceptContent": "Categories carry the software image, network config, and role. Setting category=gpu-compute means the next PXE boot pulls the H100 driver+CUDA image and joins the right network segment."
+        },
+        {
+          "id": "step-3",
+          "type": "observe",
+          "situation": "Watch the provisioning status as the node boots.",
+          "task": "Tail provisioning status",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": { "type": "none" },
+          "observeCommand": "cmsh -c 'device; status -n node-h100-33'",
+          "conceptContent": "status shows provisioning phase: INSTALLING, INSTALLER_REBOOTING, UP. A long stall in INSTALLING usually points to DHCP, PXE TFTP, or image-server issues."
+        },
+        {
+          "id": "step-4",
+          "type": "concept",
+          "situation": "After UP, verify the GPU stack is healthy on the new node.",
+          "task": "Run nvidia-smi on the new node",
+          "expectedCommands": ["nvidia-smi"],
+          "hints": [
+            "nvidia-smi on the node verifies driver + 8 H100s detected"
+          ],
+          "validation": { "type": "command", "command": "nvidia-smi" },
+          "conceptContent": "After provisioning, run nvidia-smi from the new node (or via pdsh from head) to confirm the driver is loaded, all 8 GPUs are visible, and the version matches the cluster baseline.",
+          "quiz": {
+            "question": "The new node booted to UP but nvidia-smi reports 'has failed because it couldn't communicate with the NVIDIA driver'. What's the most likely cause?",
+            "options": [
+              "The H100 GPUs are defective",
+              "The provisioning image is missing the matching NVIDIA driver or kernel module didn't load",
+              "Base Command Manager is not licensed",
+              "The InfiniBand fabric is down"
+            ],
+            "correctIndex": 1,
+            "explanation": "When nvidia-smi can't communicate with the driver, the driver modules are usually missing or the kernel version drifted from the modules built into the image. Rebuild/update the image with cm-create-image and re-provision."
+          }
+        }
+      ]
+    },
+    {
+      "id": "aio-d2-slurm-onboarding",
+      "domain": 2,
+      "title": "Slurm Account & Quota Onboarding",
+      "narrative": {
+        "hook": "A new research team starts Monday — and they need GPU access by then.",
+        "setting": "The ML Research team has been allocated 16 H100s across the cluster. As the Slurm administrator, you need to create their account, associate two new users with it, set a GPU quota, and verify they can submit a job to the ai partition.",
+        "resolution": "The team account exists with the correct GPU quota, both users are associated, and a smoke-test job submitted as one of them runs successfully."
+      },
+      "commandFamilies": ["slurm-ops"],
+      "estimatedMinutes": 15,
+      "difficulty": "intermediate",
+      "tier": 1,
+      "skippable": false,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "concept",
+          "situation": "Create the Slurm account for ml-research.",
+          "task": "Create the account",
+          "expectedCommands": [
+            "sacctmgr add account ml-research Description=\"ML Research team\" Organization=ai"
+          ],
+          "hints": [
+            "sacctmgr add account <name> Description=... Organization=..."
+          ],
+          "validation": { "type": "command", "command": "sacctmgr" },
+          "conceptContent": "sacctmgr writes to the Slurm accounting database. Account hierarchies (parent/child) let you express organizational structure and apply quotas at any level."
+        },
+        {
+          "id": "step-2",
+          "type": "concept",
+          "situation": "Associate the two new users with the account.",
+          "task": "Add the users",
+          "expectedCommands": [
+            "sacctmgr add user alice Account=ml-research DefaultAccount=ml-research"
+          ],
+          "hints": ["sacctmgr add user <user> Account=<account>"],
+          "validation": { "type": "command", "command": "sacctmgr" },
+          "conceptContent": "An association ties a user to an account on a cluster. Until the user has an association, sbatch rejects their submissions with 'Invalid account'."
+        },
+        {
+          "id": "step-3",
+          "type": "concept",
+          "situation": "Set a GPU quota of 16 on the account so they can't exceed their allocation.",
+          "task": "Set GrpTRES quota",
+          "expectedCommands": [
+            "sacctmgr modify account ml-research set GrpTRES=gres/gpu=16"
+          ],
+          "hints": ["sacctmgr modify account <name> set GrpTRES=gres/gpu=N"],
+          "validation": { "type": "command", "command": "sacctmgr" },
+          "conceptContent": "GrpTRES caps the simultaneous resources an account can consume across all its users — a hard ceiling enforced by the scheduler at job-start time."
+        },
+        {
+          "id": "step-4",
+          "type": "concept",
+          "situation": "Verify the queue accepts a smoke-test job from a member of the new team.",
+          "task": "Check the queue",
+          "expectedCommands": ["squeue"],
+          "hints": ["squeue lists running and pending jobs"],
+          "validation": { "type": "command", "command": "squeue" },
+          "conceptContent": "squeue confirms the smoke-test job is queued and visible. If the REASON column says 'InvalidAccount', the association is wrong; if it says 'QOSGrpTRES', the quota is exhausted.",
+          "quiz": {
+            "question": "A user from ml-research submits a job for 32 GPUs. The job stays pending forever. What's the most likely cause given today's onboarding?",
+            "options": [
+              "The cluster is fully booked",
+              "The 16-GPU GrpTRES quota on the account caps single-job size",
+              "The user's home directory isn't mounted",
+              "The job script has a syntax error"
+            ],
+            "correctIndex": 1,
+            "explanation": "GrpTRES=gres/gpu=16 caps the account's total GPU concurrency. A single 32-GPU job exceeds the cap and will never start under that quota. The fix is either raising the quota or splitting the job."
+          }
+        }
+      ]
+    },
+    {
+      "id": "aio-d2-mig-partition",
+      "domain": 2,
+      "title": "MIG Partitioning for Multi-Tenant Inference",
+      "narrative": {
+        "hook": "Marketing wants to run dozens of small inference services on a single H100.",
+        "setting": "An H100 in the inference pool is currently allocated whole-GPU to a single low-utilization workload. The product team wants to share it among 7 small inference replicas. You'll enable MIG mode and create 7 equal slices.",
+        "resolution": "MIG is enabled on the GPU, 7 instances are created, and nvidia-smi shows the new partition layout ready for Run:ai or Kubernetes scheduling."
+      },
+      "commandFamilies": ["gpu-admin"],
+      "estimatedMinutes": 10,
+      "difficulty": "intermediate",
+      "tier": 2,
+      "skippable": false,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "concept",
+          "situation": "Check current GPU mode and MIG capability.",
+          "task": "Inspect current state",
+          "expectedCommands": ["nvidia-smi"],
+          "hints": [
+            "Plain `nvidia-smi` shows current mode and any existing MIG layout"
+          ],
+          "validation": { "type": "command", "command": "nvidia-smi" },
+          "conceptContent": "Before flipping MIG mode, confirm no processes are using the GPU. MIG mode changes are disruptive — any running CUDA process on the device will fail."
+        },
+        {
+          "id": "step-2",
+          "type": "concept",
+          "situation": "Enable MIG mode on GPU 0.",
+          "task": "Enable MIG",
+          "expectedCommands": ["nvidia-smi -i 0 -mig 1"],
+          "hints": ["-mig 1 enables MIG mode on the targeted GPU"],
+          "validation": { "type": "command", "command": "nvidia-smi" },
+          "conceptContent": "Enabling MIG flips the GPU into Multi-Instance mode. On H100 you immediately gain access to MIG profiles for partitioning. On some systems a GPU reset is required after enable — nvidia-smi will tell you."
+        },
+        {
+          "id": "step-3",
+          "type": "observe",
+          "situation": "List available MIG instance profiles.",
+          "task": "Inspect MIG profiles",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": { "type": "none" },
+          "observeCommand": "nvidia-smi mig -lgip",
+          "conceptContent": "-lgip lists GPU Instance Profiles (e.g. 1g.10gb, 1g.20gb, 2g.20gb, 3g.40gb, 7g.80gb for H100). Profile 19 is the smallest 1g.10gb — perfect for 7-way partitioning."
+        },
+        {
+          "id": "step-4",
+          "type": "concept",
+          "situation": "Create 7 minimum-size instances on GPU 0.",
+          "task": "Create instances",
+          "expectedCommands": [
+            "nvidia-smi mig -i 0 -cgi 19,19,19,19,19,19,19 -C"
+          ],
+          "hints": [
+            "-cgi creates GPU Instances by profile id; -C also creates Compute Instances on them"
+          ],
+          "validation": { "type": "command", "command": "nvidia-smi" },
+          "conceptContent": "-cgi takes a list of profile IDs and creates the GPU Instances. -C automatically creates a default Compute Instance on each GI so the slices are immediately usable by CUDA workloads.",
+          "quiz": {
+            "question": "After MIG is enabled and partitions are created, Kubernetes pods still see only one large GPU. What's the most likely fix?",
+            "options": [
+              "Disable persistence mode",
+              "Restart the NVIDIA driver",
+              "Configure the GPU Operator's MIG manager and matching node label/profile",
+              "Switch from H100 to A100"
+            ],
+            "correctIndex": 2,
+            "explanation": "On Kubernetes, the GPU Operator's MIG Manager component reconciles the desired MIG layout from the node label. Without the right label/profile and the MIG strategy set, the device plugin still advertises whole GPUs."
+          }
+        }
+      ]
+    },
+    {
+      "id": "aio-d3-slurm-training",
+      "domain": 3,
+      "title": "Submit Your First Container Training Job",
+      "narrative": {
+        "hook": "A data scientist needs to launch a containerized PyTorch training job — and they've asked you to walk through the right pattern.",
+        "setting": "The team uses Pyxis + Enroot for containerized Slurm jobs from NGC images. You'll demonstrate submitting a single-node 1-GPU PyTorch job, inspecting its state, and pulling logs after completion.",
+        "resolution": "The job runs, completes, and you can show the team how to look up its accounting record by JobID — establishing the standard recipe for their training workflow."
+      },
+      "commandFamilies": ["slurm-ops", "container-deploy"],
+      "estimatedMinutes": 12,
+      "difficulty": "beginner",
+      "tier": 1,
+      "skippable": false,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "concept",
+          "situation": "Confirm the ai partition has free GPU capacity right now.",
+          "task": "Check partition state",
+          "expectedCommands": ["sinfo"],
+          "hints": ["sinfo shows partition and node availability"],
+          "validation": { "type": "command", "command": "sinfo" },
+          "conceptContent": "sinfo before submitting confirms there are idle/mix nodes in your target partition. If everything is alloc, your job will queue."
+        },
+        {
+          "id": "step-2",
+          "type": "concept",
+          "situation": "Launch a single-GPU interactive PyTorch container.",
+          "task": "Submit with pyxis",
+          "expectedCommands": [
+            "srun --partition=ai --gres=gpu:1 --container-image=nvcr.io#nvidia/pytorch:24.01-py3 nvidia-smi"
+          ],
+          "hints": [
+            "srun --gres=gpu:1 --container-image=nvcr.io#nvidia/pytorch:24.01-py3 nvidia-smi"
+          ],
+          "validation": { "type": "command", "command": "srun" },
+          "conceptContent": "Pyxis (the SPANK plugin) lets srun accept --container-image. Enroot imports the image lazily, runs it unprivileged, and binds /dev/nvidia* into the container. The job ran nvidia-smi inside the container — proving GPU passthrough works."
+        },
+        {
+          "id": "step-3",
+          "type": "concept",
+          "situation": "After the job completes, look it up in accounting.",
+          "task": "Find the job in sacct",
+          "expectedCommands": [
+            "sacct -X --format=JobID,JobName,Partition,Elapsed,AllocTRES,State,ExitCode"
+          ],
+          "hints": ["sacct -X --format=JobID,Elapsed,AllocTRES,State,ExitCode"],
+          "validation": { "type": "command", "command": "sacct" },
+          "conceptContent": "-X hides job steps and shows only the parent job. The AllocTRES column shows the GPU was allocated; State=COMPLETED, ExitCode=0:0 means a clean exit.",
+          "quiz": {
+            "question": "Your sacct output shows State=OUT_OF_MEMORY. Where would you look next?",
+            "options": [
+              "sinfo on the partition",
+              "scontrol show node",
+              "sacct with MaxRSS to confirm the memory peak, and check the job's --mem request",
+              "ipmitool sel list"
+            ],
+            "correctIndex": 2,
+            "explanation": "OUT_OF_MEMORY means the cgroup limit was exceeded. sacct's MaxRSS shows how much was used; compare it to the --mem the user requested and advise raising it."
+          }
+        }
+      ]
+    },
+    {
+      "id": "aio-d4-nccl-bandwidth-collapse",
+      "domain": 4,
+      "title": "Troubleshoot: NCCL Bandwidth Collapse",
+      "narrative": {
+        "hook": "A multi-node training run that used to fly is now crawling. NCCL bandwidth is 1/8 of normal.",
+        "setting": "The ML team reports their 8-node H100 training, which has been running for weeks, dropped from ~370 GB/s allreduce bandwidth to ~45 GB/s after a maintenance window. They blame 'the network'. You have to root-cause it before tomorrow's deadline.",
+        "resolution": "You isolate the problem to Fabric Manager not running on two nodes after the maintenance reboot. After restarting nvidia-fabricmanager on the affected nodes, NCCL bandwidth returns to baseline."
+      },
+      "commandFamilies": ["fabric-storage", "gpu-admin"],
+      "estimatedMinutes": 15,
+      "difficulty": "advanced",
+      "tier": 3,
+      "skippable": false,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "concept",
+          "situation": "Start by confirming the InfiniBand fabric is healthy — the team's first hypothesis.",
+          "task": "Spot-check IB ports",
+          "expectedCommands": ["ibstat"],
+          "hints": ["ibstat shows port state and rate"],
+          "validation": { "type": "command", "command": "ibstat" },
+          "conceptContent": "ibstat on each node shows port State=Active and the expected rate. If IB were the problem you'd see Down/Init or rate mismatch — but the team says bandwidth is reduced 8x, which suggests intra-node NVLink, not IB."
+        },
+        {
+          "id": "step-2",
+          "type": "observe",
+          "situation": "Bandwidth that collapses by 8x on an HGX H100 system is the classic signature of NVLink not being available — falling back to PCIe.",
+          "task": "Check Fabric Manager",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": { "type": "none" },
+          "observeCommand": "systemctl status nvidia-fabricmanager",
+          "conceptContent": "Fabric Manager is responsible for configuring NVSwitch on HGX/DGX systems. If it isn't running, the NVLink mesh between GPUs in the same node doesn't form. NCCL silently falls back to PCIe and bandwidth craters."
+        },
+        {
+          "id": "step-3",
+          "type": "concept",
+          "situation": "Restart Fabric Manager on the affected nodes.",
+          "task": "Bring Fabric Manager back up",
+          "expectedCommands": ["systemctl start nvidia-fabricmanager"],
+          "hints": ["systemctl start nvidia-fabricmanager"],
+          "validation": { "type": "command", "command": "systemctl" },
+          "conceptContent": "After the start, validate it stays running for 30 seconds (it can crash-loop if driver/FM versions are mismatched after an update). Check `systemctl status` and `journalctl -u nvidia-fabricmanager` for clean startup logs.",
+          "quiz": {
+            "question": "Even after restarting Fabric Manager, the service immediately fails. journalctl shows 'driver version mismatch'. What's the fix?",
+            "options": [
+              "Disable MIG mode",
+              "Align the nvidia-fabricmanager package version with the installed NVIDIA driver version (typically by reinstalling the matching package or updating the driver)",
+              "Reboot the InfiniBand switch",
+              "Re-image the head node"
+            ],
+            "correctIndex": 1,
+            "explanation": "Fabric Manager is tightly coupled to the NVIDIA driver version. A driver upgrade without a matching FM upgrade (or vice versa) causes startup failure with a version-mismatch error. Reinstall the FM package that matches the running driver."
+          }
+        },
+        {
+          "id": "step-4",
+          "type": "concept",
+          "situation": "After Fabric Manager is healthy, rerun the NCCL allreduce benchmark to confirm bandwidth recovery.",
+          "task": "Verify NCCL recovery",
+          "expectedCommands": ["nvidia-smi"],
+          "hints": [
+            "nvidia-smi to confirm GPUs are still healthy before benchmarking"
+          ],
+          "validation": { "type": "command", "command": "nvidia-smi" },
+          "conceptContent": "Final validation: rerun the team's allreduce test. Bandwidth should return to baseline (~370 GB/s on H100 HGX). Document the maintenance-window correlation so this becomes a known post-reboot check."
+        }
+      ]
+    }
+  ]
+}

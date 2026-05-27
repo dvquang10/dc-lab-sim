@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CheckCircle2, Clock, Crosshair } from "lucide-react";
 import { getAllScenarios, getScenarioMetadata } from "../utils/scenarioLoader";
 import { useSimulationStore } from "@/store/simulationStore";
+import { useCertificationModeStore } from "@/store/certificationModeStore";
+import { getDomainInfo, getActiveDomainIds } from "@/utils/certDomainInfo";
 import { IncidentLauncher } from "./IncidentLauncher";
 
 interface LabsAndScenariosViewProps {
@@ -9,17 +11,27 @@ interface LabsAndScenariosViewProps {
   onStartIncident?: (difficulty: string, domain?: number) => void;
 }
 
-const DOMAIN_INFO: Record<
-  string,
-  { name: string; weight: string; number: number }
-> = {
-  domain0: { name: "Foundational Skills", weight: "0%", number: 0 },
-  domain1: { name: "Systems & Server Bring-Up", weight: "31%", number: 1 },
-  domain2: { name: "Physical Layer Management", weight: "5%", number: 2 },
-  domain3: { name: "Control Plane Installation", weight: "19%", number: 3 },
-  domain4: { name: "Cluster Test & Verification", weight: "33%", number: 4 },
-  domain5: { name: "Troubleshooting & Optimization", weight: "12%", number: 5 },
-};
+type LabsDomainInfo = { name: string; weight: string; number: number };
+
+function buildLabsDomainInfo(
+  certMode: "aii" | "aio",
+): Record<string, LabsDomainInfo> {
+  const info = getDomainInfo(certMode);
+  const active = getActiveDomainIds(certMode);
+  // Foundational (domain0) is a universal warm-up bucket shown for both certs.
+  const out: Record<string, LabsDomainInfo> = {
+    domain0: { name: "Foundational Skills", weight: "0%", number: 0 },
+  };
+  active.forEach((id, idx) => {
+    const blueprint = info[id];
+    out[id] = {
+      name: blueprint.name,
+      weight: `${blueprint.weight}%`,
+      number: idx + 1,
+    };
+  });
+  return out;
+}
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: "bg-green-900/50 text-green-300 border-green-700",
@@ -38,6 +50,8 @@ export function LabsAndScenariosView({
   onStartIncident,
 }: LabsAndScenariosViewProps) {
   const completedScenarios = useSimulationStore((s) => s.completedScenarios);
+  const certMode = useCertificationModeStore((s) => s.mode);
+  const DOMAIN_INFO = useMemo(() => buildLabsDomainInfo(certMode), [certMode]);
   const [domainScenarios, setDomainScenarios] = useState<
     Record<
       string,

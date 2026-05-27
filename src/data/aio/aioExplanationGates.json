@@ -1,0 +1,88 @@
+{
+  "explanationGates": [
+    {
+      "id": "gate-aio-d1-bcm-tour",
+      "scenarioId": "aio-d1-bcm-tour",
+      "familyId": "bcm-tools",
+      "question": "After a head-node failover, you notice that recent config changes (made via cmsh) didn't survive on the now-active head node. What's the most likely cause?",
+      "choices": [
+        "Slurm was misconfigured",
+        "The changes were made in a cmsh session that was never committed, or HA sync was broken at the time of commit",
+        "Base View is incompatible",
+        "MIG mode was on"
+      ],
+      "correctAnswer": 1,
+      "explanation": "cmsh stages changes in the session; they don't replicate to the passive head until commit. If commit happened during an HA sync outage (cmha status would have shown stale sync), changes can be lost on failover. Always verify cmha status is healthy when making critical changes."
+    },
+    {
+      "id": "gate-aio-d1-provision-node",
+      "scenarioId": "aio-d1-provision-node",
+      "familyId": "bcm-tools",
+      "question": "You assigned a new node to the gpu-compute category, but after PXE boot it comes up with the WRONG driver version. What's the right next step?",
+      "choices": [
+        "Re-pxe-boot the node",
+        "Verify the software image bound to gpu-compute was built with cm-create-image including the desired driver — and rebuild if not",
+        "Reboot the head node",
+        "Edit /etc/modprobe on the compute node by hand"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Categories carry software images. If the gpu-compute image was built (or last updated) before the new driver was added, every node it provisions will get the old driver. cm-create-image (or updating the image) is the fix; manual edits on the compute node are wiped at next reprovision."
+    },
+    {
+      "id": "gate-aio-d2-slurm-onboarding",
+      "scenarioId": "aio-d2-slurm-onboarding",
+      "familyId": "slurm-ops",
+      "question": "A new user on the ml-research account submits a job and gets 'Invalid account or account/partition combination specified'. The account exists. What's missing?",
+      "choices": [
+        "The cluster needs a reboot",
+        "The user is not associated with the account on this cluster, OR the account is not associated with the requested partition — fix with sacctmgr add user / modify partition associations",
+        "The user needs a new SSH key",
+        "Run:ai is rejecting the submission"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Slurm's 'Invalid account' rejection means the (user, account, cluster, partition) association is missing. sacctmgr add user with the right Account= and (optionally) Partition= entries creates the association. Account existence is necessary but not sufficient — associations are the gating object."
+    },
+    {
+      "id": "gate-aio-d2-mig-partition",
+      "scenarioId": "aio-d2-mig-partition",
+      "familyId": "gpu-admin",
+      "question": "After enabling MIG and creating 7 instances on an H100, Kubernetes still advertises only one nvidia.com/gpu on the node. What's the right MIG strategy?",
+      "choices": [
+        "Disable MIG and use whole-GPU sharing",
+        "Set the GPU Operator's MIG strategy (single or mixed) and apply the matching nvidia.com/mig.config node label so MIG Manager partitions and exposes the slices",
+        "Reinstall Kubernetes",
+        "Restart Fabric Manager"
+      ],
+      "correctAnswer": 1,
+      "explanation": "On Kubernetes, MIG must be coordinated with the GPU Operator. The MIG strategy ('single' or 'mixed') tells the device plugin how to represent slices, and the nvidia.com/mig.config label tells MIG Manager which profile to apply. Without these, the device plugin keeps advertising whole GPUs."
+    },
+    {
+      "id": "gate-aio-d3-slurm-training",
+      "scenarioId": "aio-d3-slurm-training",
+      "familyId": "container-deploy",
+      "question": "A pyxis srun fails with 'enroot: invalid image reference'. Most likely cause?",
+      "choices": [
+        "The container image reference syntax is wrong (e.g. missing 'docker://' or wrong NGC registry separator '#' vs '/')",
+        "Slurm is down",
+        "The user is over quota",
+        "MIG mode is enabled"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Enroot/Pyxis use a specific image reference syntax — NGC paths use # between registry and path (nvcr.io#nvidia/pytorch:tag). Common errors include using docker-style separators (nvcr.io/nvidia/...) or missing the docker:// prefix when importing manually."
+    },
+    {
+      "id": "gate-aio-d4-nccl-bandwidth-collapse",
+      "scenarioId": "aio-d4-nccl-bandwidth-collapse",
+      "familyId": "fabric-storage",
+      "question": "After the maintenance window, a few nodes still show low NCCL bandwidth even though nvidia-fabricmanager.service is 'active (running)'. What should you check next?",
+      "choices": [
+        "Restart slurmd",
+        "Check journalctl -u nvidia-fabricmanager for late-startup errors, validate the FM-driver versions match, and run 'nvidia-smi nvlink -s' to confirm NVLink is up on every GPU",
+        "Reboot the InfiniBand switch",
+        "Lower the GPU clock"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Active service status is necessary but not sufficient — FM can be running but fail to bind NVSwitch if there's a version mismatch or a transient init error after boot. journalctl shows FM's init log; 'nvidia-smi nvlink -s' or 'nvidia-smi topo -m' confirms the actual NVLink mesh state per GPU."
+    }
+  ]
+}

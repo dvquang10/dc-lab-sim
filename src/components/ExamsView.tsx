@@ -1,4 +1,4 @@
-import commandFamiliesData from "@/data/commandFamilies.json";
+import { useCommandFamiliesData } from "@/utils/useCommandFamilies";
 import { EXAM_MODE_REGISTRY } from "@/data/examModeRegistry";
 import { useLearningStore } from "@/store/learningStore";
 import { useLearningProgressStore } from "@/store/learningProgressStore";
@@ -36,6 +36,7 @@ export function ExamsView({
     (s) => s.masteryQuizScores,
   );
 
+  const commandFamiliesData = useCommandFamiliesData();
   const families = (commandFamiliesData as { families: CommandFamily[] })
     .families;
 

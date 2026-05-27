@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { TerminalDemo } from "./TerminalDemo";
+import { useCertificationModeStore } from "../store/certificationModeStore";
 
 interface WelcomeScreenProps {
   onClose: () => void;
@@ -17,6 +18,8 @@ interface WelcomeScreenProps {
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const certMode = useCertificationModeStore((s) => s.mode);
+  const certShort = certMode === "aio" ? "NCP-AIO" : "NCP-AII";
 
   // Handle close with animation
   const handleClose = () => {
@@ -71,7 +74,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onClose }) => {
             DC Lab <span className="text-nvidia-green">Sim</span>
           </h1>
           <p className="hidden sm:block text-gray-400 text-sm max-w-2xl mx-auto mt-1 px-4 font-light">
-            Browser-based datacenter lab simulator for NCP-AII certification
+            Browser-based datacenter lab simulator for {certShort} certification
             exam prep. Train, test, and certify in a risk-free virtual world.
           </p>
         </div>

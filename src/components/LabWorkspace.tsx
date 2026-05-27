@@ -23,7 +23,7 @@ import {
   isTierUnlocked,
   type TierProgressState,
 } from "@/utils/tierProgressionEngine";
-import commandFamiliesData from "@/data/commandFamilies.json";
+import { useCommandFamiliesData } from "@/utils/useCommandFamilies";
 import type { CommandFamily } from "@/types/commandFamilies";
 import { NarrativeIntro } from "./NarrativeIntro";
 import { InlineQuiz } from "./InlineQuiz";
@@ -125,10 +125,11 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
     setShowAnswer(false);
   }, [currentStepIdx, activeScenario?.id]);
 
+  const commandFamiliesData = useCommandFamiliesData();
   // Get command families for tool hints
   const commandFamilies = useMemo(() => {
     return (commandFamiliesData as { families: CommandFamily[] }).families;
-  }, []);
+  }, [commandFamiliesData]);
 
   // Get relevant tools for this scenario's command families
   const relevantTools = useMemo(() => {

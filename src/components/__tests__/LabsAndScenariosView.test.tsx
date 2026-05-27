@@ -169,14 +169,13 @@ describe("LabsAndScenariosView", () => {
   it("shows domain names on domain cards", () => {
     const props = defaultProps();
     render(<LabsAndScenariosView {...props} />);
+    // Names come from src/utils/certDomainInfo.ts AII_DOMAIN_INFO (default cert mode).
     expect(screen.getByText("Foundational Skills")).toBeInTheDocument();
-    expect(screen.getByText("Systems & Server Bring-Up")).toBeInTheDocument();
-    expect(screen.getByText("Physical Layer Management")).toBeInTheDocument();
-    expect(screen.getByText("Control Plane Installation")).toBeInTheDocument();
-    expect(screen.getByText("Cluster Test & Verification")).toBeInTheDocument();
-    expect(
-      screen.getByText("Troubleshooting & Optimization"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Platform Bring-Up")).toBeInTheDocument();
+    expect(screen.getByText("Accelerator Configuration")).toBeInTheDocument();
+    expect(screen.getByText("Base Infrastructure")).toBeInTheDocument();
+    expect(screen.getByText("Validation & Testing")).toBeInTheDocument();
+    expect(screen.getByText("Troubleshooting")).toBeInTheDocument();
   });
 
   // --------------------------------------------------------------------------

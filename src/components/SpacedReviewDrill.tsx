@@ -12,7 +12,7 @@ import {
   type CommandFamily,
 } from "../utils/spacedRepetition";
 import { useLearningProgressStore } from "../store/learningProgressStore";
-import commandFamiliesData from "../data/commandFamilies.json";
+import { useCommandFamiliesData } from "../utils/useCommandFamilies";
 import type { CommandFamiliesData } from "../types/commandFamilies";
 
 interface SpacedReviewDrillProps {
@@ -47,6 +47,7 @@ export const SpacedReviewDrill: React.FC<SpacedReviewDrillProps> = ({
   const [timerActive, setTimerActive] = useState<boolean>(true);
   const [showSnoozeMenu, setShowSnoozeMenu] = useState<boolean>(false);
 
+  const commandFamiliesData = useCommandFamiliesData();
   // Get command families data
   const families = useMemo(() => {
     const data = commandFamiliesData as CommandFamiliesData;
@@ -60,7 +61,7 @@ export const SpacedReviewDrill: React.FC<SpacedReviewDrillProps> = ({
         tagline: t.tagline,
       })),
     })) as CommandFamily[];
-  }, []);
+  }, [commandFamiliesData]);
 
   // Determine which family to review
   const targetFamilyId = useMemo(() => {
@@ -96,7 +97,7 @@ export const SpacedReviewDrill: React.FC<SpacedReviewDrillProps> = ({
   const familyInfo = useMemo(() => {
     const data = commandFamiliesData as CommandFamiliesData;
     return data.families.find((f) => f.id === targetFamilyId);
-  }, [targetFamilyId]);
+  }, [targetFamilyId, commandFamiliesData]);
 
   // Timer effect
   useEffect(() => {

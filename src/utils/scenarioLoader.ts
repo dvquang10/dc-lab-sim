@@ -8,36 +8,64 @@ import { useSimulationStore } from "@/store/simulationStore";
 import { narrativeToScenario } from "./narrativeAdapter";
 import { createDGXNode } from "./clusterFactory";
 import { logger } from "@/utils/logger";
+import {
+  useCertificationModeStore,
+  type CertificationMode,
+} from "@/store/certificationModeStore";
 
-// Cache for loaded scenarios
-let scenarioCache: Map<string, Scenario> | null = null;
-// Cache for raw narrative data
-let narrativeScenarios: NarrativeScenario[] | null = null;
+// Per-cert caches so toggling AII/AIO doesn't return stale scenarios.
+const scenarioCacheByCert: Map<
+  CertificationMode,
+  Map<string, Scenario>
+> = new Map();
+const narrativeCacheByCert: Map<CertificationMode, NarrativeScenario[]> =
+  new Map();
 
-/**
- * Lazily load narrative scenario data via dynamic import.
- */
-async function ensureNarratives(): Promise<NarrativeScenario[]> {
-  if (narrativeScenarios) return narrativeScenarios;
-  const mod = await import("../data/narrativeScenarios.json");
-  narrativeScenarios = mod.default.scenarios as unknown as NarrativeScenario[];
-  return narrativeScenarios;
+function currentCertMode(): CertificationMode {
+  return useCertificationModeStore.getState().mode;
 }
 
 /**
- * Build the scenario cache from narrative scenarios.
+ * Lazily load narrative scenario data via dynamic import for the current cert.
+ */
+async function ensureNarratives(): Promise<NarrativeScenario[]> {
+  const mode = currentCertMode();
+  const cached = narrativeCacheByCert.get(mode);
+  if (cached) return cached;
+  const mod =
+    mode === "aio"
+      ? await import("../data/aio/aioNarrativeScenarios.json")
+      : await import("../data/narrativeScenarios.json");
+  const scenarios = mod.default.scenarios as unknown as NarrativeScenario[];
+  narrativeCacheByCert.set(mode, scenarios);
+  return scenarios;
+}
+
+/**
+ * Reset all scenario caches — call when the certification mode changes
+ * so stale data isn't served from the previous mode.
+ */
+export function resetScenarioCaches(): void {
+  scenarioCacheByCert.clear();
+  narrativeCacheByCert.clear();
+}
+
+/**
+ * Build the scenario cache from narrative scenarios for the active cert mode.
  */
 async function ensureCache(): Promise<Map<string, Scenario>> {
-  if (scenarioCache) return scenarioCache;
+  const mode = currentCertMode();
+  const cached = scenarioCacheByCert.get(mode);
+  if (cached) return cached;
 
   const narratives = await ensureNarratives();
-  scenarioCache = new Map();
+  const cache = new Map<string, Scenario>();
   for (const narrative of narratives) {
     const scenario = narrativeToScenario(narrative);
-    scenarioCache.set(scenario.id, scenario);
+    cache.set(scenario.id, scenario);
   }
-
-  return scenarioCache;
+  scenarioCacheByCert.set(mode, cache);
+  return cache;
 }
 
 /**
@@ -366,7 +394,9 @@ export function applyFaultsToContext(
         const serviceName = parameters?.service as string | undefined;
         const rawState = parameters?.state as string | undefined;
         if (!serviceName) {
-          logger.warn("service-state fault missing required 'service' parameter");
+          logger.warn(
+            "service-state fault missing required 'service' parameter",
+          );
           break;
         }
         if (!nodeId) {

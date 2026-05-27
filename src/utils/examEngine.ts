@@ -5,6 +5,16 @@ import type {
   DomainId,
 } from "@/types/scenarios";
 import { logger } from "@/utils/logger";
+import {
+  useCertificationModeStore,
+  type CertificationMode,
+} from "@/store/certificationModeStore";
+import {
+  AII_DOMAIN_INFO,
+  AIO_DOMAIN_INFO,
+  getActiveDomainIds,
+  getDomainWeights,
+} from "@/utils/certDomainInfo";
 
 /**
  * Exam modes for different study scenarios
@@ -87,40 +97,26 @@ export const EXAM_MODE_CONFIGS: Record<
 };
 
 /**
- * Domain names and their descriptions
+ * AII domain blueprint (legacy export — preserved for backwards-compat).
+ * For cert-aware code, prefer `getDomainInfoForCert(mode)`.
  */
 export const DOMAIN_INFO: Record<
   DomainId,
   { name: string; weight: number; description: string }
-> = {
-  domain1: {
-    name: "Platform Bring-Up",
-    weight: 31,
-    description:
-      "Hardware verification, BIOS, BMC, drivers, and POST procedures",
-  },
-  domain2: {
-    name: "Accelerator Configuration",
-    weight: 5,
-    description: "GPU configuration, MIG, NVLink, and accelerator setup",
-  },
-  domain3: {
-    name: "Base Infrastructure",
-    weight: 19,
-    description: "Slurm, containers, storage, and network configuration",
-  },
-  domain4: {
-    name: "Validation & Testing",
-    weight: 33,
-    description: "DCGM, benchmarks, health checks, and performance validation",
-  },
-  domain5: {
-    name: "Troubleshooting",
-    weight: 12,
-    description:
-      "Error diagnosis, XID codes, thermal issues, and problem resolution",
-  },
-};
+> = AII_DOMAIN_INFO;
+
+/**
+ * Returns the active DOMAIN_INFO map for a given certification mode.
+ */
+export function getDomainInfoForCert(
+  mode: CertificationMode,
+): Record<DomainId, { name: string; weight: number; description: string }> {
+  return mode === "aio" ? AIO_DOMAIN_INFO : AII_DOMAIN_INFO;
+}
+
+function getCurrentCertMode(): CertificationMode {
+  return useCertificationModeStore.getState().mode;
+}
 
 /**
  * Select questions based on exam mode
@@ -286,14 +282,18 @@ export function getEstimatedTimePerQuestion(
 }
 
 /**
- * Loads exam questions from JSON file
+ * Loads exam questions from the JSON file matching the current certification mode.
  */
 export async function loadExamQuestions(): Promise<ExamQuestion[]> {
+  const mode = getCurrentCertMode();
   try {
-    const mod = await import("../data/examQuestions.json");
+    const mod =
+      mode === "aio"
+        ? await import("../data/aio/aioExamQuestions.json")
+        : await import("../data/examQuestions.json");
     return (mod.default.questions || []) as ExamQuestion[];
   } catch (error) {
-    logger.error("Error loading exam questions:", error);
+    logger.error(`Error loading exam questions for ${mode}:`, error);
     return [];
   }
 }
@@ -311,13 +311,17 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
- * Selects questions according to domain weighting
+ * Selects questions according to domain weighting for the active certification mode.
  */
 export function selectExamQuestions(
   allQuestions: ExamQuestion[],
   totalQuestions: number = 35,
 ): ExamQuestion[] {
-  // Group questions by domain
+  const mode = getCurrentCertMode();
+  const activeDomains = getActiveDomainIds(mode);
+  const domainWeights = getDomainWeights(mode);
+
+  // Group questions by domain (only consider domains active for this cert).
   const questionsByDomain: Record<DomainId, ExamQuestion[]> = {
     domain1: [],
     domain2: [],
@@ -325,59 +329,53 @@ export function selectExamQuestions(
     domain4: [],
     domain5: [],
   };
-
   allQuestions.forEach((q) => {
     questionsByDomain[q.domain].push(q);
   });
 
-  // Domain weights from NCP-AII specification
-  const domainWeights: Record<DomainId, number> = {
-    domain1: 0.31, // 31%
-    domain2: 0.05, // 5%
-    domain3: 0.19, // 19%
-    domain4: 0.33, // 33%
-    domain5: 0.12, // 12%
-  };
-
-  // Calculate question count per domain
+  // Calculate question count per active domain.
   const questionsPerDomain: Record<DomainId, number> = {
-    domain1: Math.round(totalQuestions * domainWeights.domain1),
-    domain2: Math.max(1, Math.round(totalQuestions * domainWeights.domain2)), // At least 1
-    domain3: Math.round(totalQuestions * domainWeights.domain3),
-    domain4: Math.round(totalQuestions * domainWeights.domain4),
-    domain5: Math.round(totalQuestions * domainWeights.domain5),
+    domain1: 0,
+    domain2: 0,
+    domain3: 0,
+    domain4: 0,
+    domain5: 0,
   };
+  activeDomains.forEach((d) => {
+    questionsPerDomain[d] = Math.max(
+      1,
+      Math.round(totalQuestions * domainWeights[d]),
+    );
+  });
 
-  // Adjust to ensure total is exactly the target
-  const currentTotal = Object.values(questionsPerDomain).reduce(
-    (a, b) => a + b,
+  // Adjust to ensure total is exactly the target by adjusting the heaviest domain.
+  const currentTotal = activeDomains.reduce(
+    (sum, d) => sum + questionsPerDomain[d],
     0,
   );
   const diff = totalQuestions - currentTotal;
   if (diff !== 0) {
-    // Add/remove from domain4 (largest domain)
-    questionsPerDomain.domain4 += diff;
+    const heaviest = [...activeDomains].sort(
+      (a, b) => domainWeights[b] - domainWeights[a],
+    )[0];
+    questionsPerDomain[heaviest] += diff;
   }
 
-  // Select and shuffle questions from each domain
+  // Select and shuffle questions from each domain.
   const selectedQuestions: ExamQuestion[] = [];
-
-  (Object.keys(questionsPerDomain) as DomainId[]).forEach((domain) => {
+  activeDomains.forEach((domain) => {
     const available = questionsByDomain[domain];
     const needed = questionsPerDomain[domain];
-
     if (available.length < needed) {
       logger.warn(
         `Not enough questions for ${domain}: have ${available.length}, need ${needed}`,
       );
     }
-
     const shuffled = shuffleArray(available);
     const selected = shuffled.slice(0, Math.min(needed, available.length));
     selectedQuestions.push(...selected);
   });
 
-  // Shuffle the final question order
   return shuffleArray(selectedQuestions);
 }
 
@@ -421,23 +419,24 @@ export function calculateExamScore(
   let totalPoints = 0;
   let earnedPoints = 0;
 
+  const activeInfo = getDomainInfoForCert(getCurrentCertMode());
   const domainStats: Record<
     DomainId,
     { total: number; correct: number; weight: number }
   > = {
-    domain1: { total: 0, correct: 0, weight: 31 },
-    domain2: { total: 0, correct: 0, weight: 5 },
-    domain3: { total: 0, correct: 0, weight: 19 },
-    domain4: { total: 0, correct: 0, weight: 33 },
-    domain5: { total: 0, correct: 0, weight: 12 },
+    domain1: { total: 0, correct: 0, weight: activeInfo.domain1.weight },
+    domain2: { total: 0, correct: 0, weight: activeInfo.domain2.weight },
+    domain3: { total: 0, correct: 0, weight: activeInfo.domain3.weight },
+    domain4: { total: 0, correct: 0, weight: activeInfo.domain4.weight },
+    domain5: { total: 0, correct: 0, weight: activeInfo.domain5.weight },
   };
 
   const domainNames: Record<DomainId, string> = {
-    domain1: "Platform Bring-Up",
-    domain2: "Accelerator Configuration",
-    domain3: "Base Infrastructure",
-    domain4: "Validation & Testing",
-    domain5: "Troubleshooting",
+    domain1: activeInfo.domain1.name,
+    domain2: activeInfo.domain2.name,
+    domain3: activeInfo.domain3.name,
+    domain4: activeInfo.domain4.name,
+    domain5: activeInfo.domain5.name,
   };
 
   const questionResults: ExamBreakdown["questionResults"] = [];
@@ -529,9 +528,10 @@ export function getExamResultSummary(
   const timeMinutes = Math.floor(timeSpent / 60);
   const timeSeconds = timeSpent % 60;
 
+  const certShort = getCurrentCertMode() === "aio" ? "NCP-AIO" : "NCP-AII";
   let summary = passed
-    ? `Congratulations! You passed the NCP-AII Practice Exam!\n\n`
-    : `You did not pass the NCP-AII Practice Exam.\n\n`;
+    ? `Congratulations! You passed the ${certShort} Practice Exam!\n\n`
+    : `You did not pass the ${certShort} Practice Exam.\n\n`;
 
   summary += `Score: ${earnedPoints}/${totalPoints} points (${percentage}%)\n`;
   summary += `Passing Score: 70%\n`;

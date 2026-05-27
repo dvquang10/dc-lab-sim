@@ -11,6 +11,7 @@ import type {
   QuizQuestionsData,
   WhyNotOther,
 } from "../types/quizQuestions";
+import { useCertificationModeStore } from "../store/certificationModeStore";
 
 interface WhichToolQuizProps {
   /** Command family ID to filter questions */
@@ -49,11 +50,14 @@ export const WhichToolQuiz: React.FC<WhichToolQuizProps> = ({
   const [quizQuestionsData, setQuizQuestionsData] =
     useState<QuizQuestionsData | null>(null);
 
+  const certMode = useCertificationModeStore((s) => s.mode);
   useEffect(() => {
-    import("../data/quizQuestions.json").then((m) =>
-      setQuizQuestionsData(m.default as QuizQuestionsData),
-    );
-  }, []);
+    const loader =
+      certMode === "aio"
+        ? import("../data/aio/aioQuizQuestions.json")
+        : import("../data/quizQuestions.json");
+    loader.then((m) => setQuizQuestionsData(m.default as QuizQuestionsData));
+  }, [certMode]);
 
   // All questions for this family (unshuffled pool)
   const allFamilyQuestions = useMemo(() => {

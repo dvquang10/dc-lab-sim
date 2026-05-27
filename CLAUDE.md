@@ -4,7 +4,12 @@ This file provides essential context about the Data Center Lab Simulator codebas
 
 ## Project Overview
 
-A browser-based training environment for the NCP-AII certification exam. Users practice datacenter commands in a simulated terminal with realistic output, guided scenarios, and comprehensive learning features.
+A browser-based training environment for NVIDIA professional certification exams. The app ships with two **certification modes** that swap in different domain blueprints, command families, scenarios, exam questions, quizzes, and explanation gates at runtime:
+
+- **NCP-AII** (AI Infrastructure) — original mode. 5 domains, hardware-focused.
+- **NCP-AIO** (AI Operations) — added in 2026-05. 4 domains, ops-focused (BCM, K8s, Run:ai, Slurm admin, MIG, NGC, Fabric Manager).
+
+Users practice datacenter commands in a simulated terminal with realistic output, guided scenarios, and comprehensive learning features. Toggle the active cert in the app header (AII | AIO button); the toggle reloads the page so all data caches reset cleanly.
 
 **Tech Stack:** React 18, TypeScript, Vite, Zustand, TailwindCSS, xterm.js, D3.js
 
@@ -72,15 +77,49 @@ The codebase has a comprehensive learning system that transforms step-following 
 
 ## Exam Domain Weights
 
-The simulator follows NCP-AII exam blueprint:
+Defined in `src/utils/certDomainInfo.ts` and consumed by `examEngine.ts`.
+
+### NCP-AII (AI Infrastructure) — 5 domains
+
+| Domain | Title                     | Weight |
+| ------ | ------------------------- | ------ |
+| 1      | Platform Bring-Up         | 31%    |
+| 2      | Accelerator Configuration | 5%     |
+| 3      | Base Infrastructure       | 19%    |
+| 4      | Validation & Testing      | 33%    |
+| 5      | Troubleshooting           | 12%    |
+
+### NCP-AIO (AI Operations) — 4 domains
 
 | Domain | Title                            | Weight |
 | ------ | -------------------------------- | ------ |
-| 1      | Systems and Server Bring-Up      | 31%    |
-| 2      | Physical Layer Management        | 5%     |
-| 3      | Control Plane Installation       | 19%    |
-| 4      | Cluster Test and Verification    | 33%    |
-| 5      | Troubleshooting and Optimization | 12%    |
+| 1      | Installation and Deployment      | 31%    |
+| 2      | Administration                   | 23%    |
+| 3      | Workload Management              | 23%    |
+| 4      | Troubleshooting and Optimization | 23%    |
+
+`DomainId` keeps the union `domain1..domain5`. For AIO, `domain5` is a zero-weight placeholder and is excluded from `getActiveDomainIds("aio")`.
+
+## Certification Mode Architecture
+
+Key files for the cert-mode toggle (added 2026-05):
+
+- `src/store/certificationModeStore.ts` — Zustand store with persisted `mode: 'aii' | 'aio'` and `CERT_MODE_INFO` metadata bundle (exam length, passing score, total domains).
+- `src/utils/certDomainInfo.ts` — `AII_DOMAIN_INFO`, `AIO_DOMAIN_INFO`, `getDomainInfo(mode)`, `getActiveDomainIds(mode)`, `getDomainWeights(mode)`.
+- `src/utils/certDataLoader.ts` — async loaders that pick AII vs AIO JSON.
+- `src/utils/useCommandFamilies.ts` — sync hook returning the active families (both files bundled at compile time).
+
+### AIO data files (parallel to existing AII files)
+
+- `src/data/aio/aioCommandFamilies.json` — 7 AIO families: bcm-tools, slurm-ops, kubernetes-ops, runai-ops, container-deploy, gpu-admin, fabric-storage
+- `src/data/aio/aioQuizQuestions.json` — Family-level "which tool?" quizzes (28 questions, 4 per family)
+- `src/data/aio/aioNarrativeScenarios.json` — 6 starter scenarios across 4 domains
+- `src/data/aio/aioExamQuestions.json` — ~42 practice questions weighted 31/23/23/23
+- `src/data/aio/aioExplanationGates.json` — Tier-progression gates for each AIO scenario
+
+### Adding more AIO content
+
+The AIO starter content is intentionally seeded — to add more scenarios/questions, edit the `aio/*.json` files and follow the same schema as the AII originals. Schemas live in `src/types/scenarios.ts`, `src/types/commandFamilies.ts`, and `src/types/quizQuestions.ts`.
 
 ## Testing Patterns
 

@@ -19,6 +19,7 @@ import {
   isExamPassed,
   type ExamMode,
 } from "@/utils/examEngine";
+import { useCertificationModeStore } from "@/store/certificationModeStore";
 
 interface ExamWorkspaceProps {
   onClose: () => void;
@@ -88,6 +89,9 @@ export function ExamWorkspace({
     toggleQuestionFlag,
   } = useSimulationStore();
   const addExamAttempt = useLearningStore((state) => state.addExamAttempt);
+  const certMode = useCertificationModeStore((s) => s.mode);
+  const certShortName = certMode === "aio" ? "NCP-AIO" : "NCP-AII";
+  const examId = certMode === "aio" ? "ncp-aio-practice" : "ncp-aii-practice";
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const examConfig = createExamConfig(mode as ExamMode);
@@ -110,7 +114,7 @@ export function ExamWorkspace({
       setQuestions(selectedQuestions);
 
       // Start exam in store
-      startExam("ncp-aii-practice");
+      startExam(examId);
 
       // Start timer (0 = no limit, use a large value)
       const duration = timeLimitSeconds || 999 * 60;
@@ -620,7 +624,7 @@ export function ExamWorkspace({
         <div className="bg-gray-800 px-6 py-4 border-b border-gray-700 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-green-400">
-              NCP-AII Practice Exam
+              {certShortName} Practice Exam
             </h2>
             <p className="text-sm text-gray-400 mt-1">
               Question {currentQuestionIdx + 1} of {questions.length}

@@ -12,7 +12,6 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { logger } from "@/utils/logger";
 import {
   selectGauntletScenarios,
-  EXAM_DOMAIN_WEIGHTS,
   type Scenario,
 } from "../utils/tierProgressionEngine";
 import { useLearningStore, type GauntletAttempt } from "../store/learningStore";
@@ -22,10 +21,11 @@ import {
   loadScenarioFromFile,
 } from "../utils/scenarioLoader";
 import {
-  DOMAINS,
   type DomainId,
   type Scenario as FullScenario,
 } from "../types/scenarios";
+import { useCertificationModeStore } from "../store/certificationModeStore";
+import { getDomainInfo, getActiveDomainIds } from "../utils/certDomainInfo";
 
 // ============================================================================
 // TYPES
@@ -56,14 +56,6 @@ type TimeOption = 30 | 60 | 90;
 
 const TIME_OPTIONS: TimeOption[] = [30, 60, 90];
 const SCENARIO_COUNT = 10;
-
-const DOMAIN_NAMES: Record<string, string> = {
-  domain1: "Platform Bring-Up",
-  domain2: "Accelerator Configuration",
-  domain3: "Base Infrastructure",
-  domain4: "Validation & Testing",
-  domain5: "Troubleshooting",
-};
 
 const DOMAIN_COLORS: Record<string, string> = {
   domain1: "bg-blue-600",
@@ -156,6 +148,32 @@ export const ExamGauntlet: React.FC<ExamGauntletProps> = ({
   const recordGauntletAttempt = useLearningStore(
     (state) => state.recordGauntletAttempt,
   );
+  const certMode = useCertificationModeStore((s) => s.mode);
+  const domainBlueprint = useMemo(() => getDomainInfo(certMode), [certMode]);
+  const activeDomainIds = useMemo(
+    () => getActiveDomainIds(certMode),
+    [certMode],
+  );
+  const DOMAIN_NAMES = useMemo(() => {
+    const map: Record<string, string> = {};
+    activeDomainIds.forEach((id) => {
+      map[id] = domainBlueprint[id].name;
+    });
+    return map;
+  }, [activeDomainIds, domainBlueprint]);
+  const EXAM_DOMAIN_WEIGHTS = useMemo(() => {
+    const weights: Record<DomainId, number> = {
+      domain1: 0,
+      domain2: 0,
+      domain3: 0,
+      domain4: 0,
+      domain5: 0,
+    };
+    activeDomainIds.forEach((id) => {
+      weights[id] = domainBlueprint[id].weight;
+    });
+    return weights;
+  }, [activeDomainIds, domainBlueprint]);
 
   // Computed values
   const completedCount = useMemo(
@@ -320,7 +338,8 @@ export const ExamGauntlet: React.FC<ExamGauntletProps> = ({
                 </li>
                 <li>
                   Scenarios are <strong>weighted by domain</strong> to match the
-                  NCP-AII exam distribution
+                  {certMode === "aio" ? " NCP-AIO" : " NCP-AII"} exam
+                  distribution
                 </li>
                 <li>Complete each scenario and mark it done to earn credit</li>
                 <li>
@@ -336,29 +355,30 @@ export const ExamGauntlet: React.FC<ExamGauntletProps> = ({
                 Domain Distribution
               </h3>
               <div className="grid grid-cols-1 gap-2">
-                {(
-                  Object.entries(EXAM_DOMAIN_WEIGHTS) as [DomainId, number][]
-                ).map(([domain, weight]) => (
-                  <div
-                    key={domain}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-gray-300">
-                      {DOMAINS[domain].title}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${DOMAIN_COLORS[domain]}`}
-                          style={{ width: `${weight}%` }}
-                        />
-                      </div>
-                      <span className="text-gray-400 text-sm w-10">
-                        {weight}%
+                {activeDomainIds.map((domain) => {
+                  const weight = EXAM_DOMAIN_WEIGHTS[domain];
+                  return (
+                    <div
+                      key={domain}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-gray-300">
+                        {domainBlueprint[domain].name}
                       </span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${DOMAIN_COLORS[domain]}`}
+                            style={{ width: `${weight}%` }}
+                          />
+                        </div>
+                        <span className="text-gray-400 text-sm w-10">
+                          {weight}%
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

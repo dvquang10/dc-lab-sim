@@ -2,11 +2,12 @@ import React, { useMemo } from "react";
 import { useLearningProgressStore } from "@/store/learningProgressStore";
 import { useLearningStore } from "@/store/learningStore";
 import { ProgressRing } from "./ProgressRing";
-import commandFamiliesData from "@/data/commandFamilies.json";
+import { useCommandFamiliesData } from "@/utils/useCommandFamilies";
 
 export const OverallProgressDashboard: React.FC = () => {
   const { familyQuizScores, reviewSchedule } = useLearningProgressStore();
   const gauntletAttempts = useLearningStore((state) => state.gauntletAttempts);
+  const commandFamiliesData = useCommandFamiliesData();
 
   // Calculate quiz statistics
   const quizStats = useMemo(() => {
@@ -31,7 +32,7 @@ export const OverallProgressDashboard: React.FC = () => {
           ? Math.round((passedFamilies / totalFamilies) * 100)
           : 0,
     };
-  }, [familyQuizScores]);
+  }, [familyQuizScores, commandFamiliesData]);
 
   // Calculate spaced repetition streak
   const streakStats = useMemo(() => {

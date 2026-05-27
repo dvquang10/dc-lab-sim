@@ -1,12 +1,8 @@
 import { GraduationCap, Trophy, Zap } from "lucide-react";
+import { useMemo } from "react";
 import { useLearningStore } from "@/store/learningStore";
 import { useLearningProgressStore } from "@/store/learningProgressStore";
-import commandFamilies from "@/data/commandFamilies.json";
-
-const FAMILY_NAMES: Record<string, string> = {};
-for (const family of commandFamilies.families) {
-  FAMILY_NAMES[family.id] = family.name;
-}
+import { useCommandFamiliesData } from "@/utils/useCommandFamilies";
 
 function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -34,6 +30,14 @@ export function RecentExamHistory({ maxItems = 5 }: RecentExamHistoryProps) {
   const masteryQuizScores = useLearningProgressStore(
     (s) => s.masteryQuizScores,
   );
+  const commandFamiliesData = useCommandFamiliesData();
+  const FAMILY_NAMES = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const family of commandFamiliesData.families) {
+      map[family.id] = family.name;
+    }
+    return map;
+  }, [commandFamiliesData]);
 
   // Build unified history list
   const entries: HistoryEntry[] = [];

@@ -1,14 +1,6 @@
 import { useLearningStore } from "@/store/learningStore";
-import { DOMAIN_INFO } from "@/utils/examEngine";
-import type { DomainId } from "@/types/scenarios";
-
-const DOMAIN_IDS: DomainId[] = [
-  "domain1",
-  "domain2",
-  "domain3",
-  "domain4",
-  "domain5",
-];
+import { useCertificationModeStore } from "@/store/certificationModeStore";
+import { getDomainInfo, getActiveDomainIds } from "@/utils/certDomainInfo";
 
 function getBarColor(percentage: number): string {
   if (percentage >= 70) return "bg-green-500";
@@ -18,6 +10,9 @@ function getBarColor(percentage: number): string {
 
 export function DomainPerformanceGrid() {
   const domainProgress = useLearningStore((s) => s.domainProgress);
+  const certMode = useCertificationModeStore((s) => s.mode);
+  const domainInfo = getDomainInfo(certMode);
+  const activeDomainIds = getActiveDomainIds(certMode);
 
   return (
     <div
@@ -29,8 +24,8 @@ export function DomainPerformanceGrid() {
       </h3>
 
       <div className="space-y-4">
-        {DOMAIN_IDS.map((domainId) => {
-          const info = DOMAIN_INFO[domainId];
+        {activeDomainIds.map((domainId) => {
+          const info = domainInfo[domainId];
           const progress = domainProgress[domainId];
           const attempted = progress?.questionsAttempted ?? 0;
           const correct = progress?.questionsCorrect ?? 0;

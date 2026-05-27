@@ -1,0 +1,651 @@
+{
+  "questions": [
+    {
+      "id": "aio-bcm-q1",
+      "familyId": "bcm-tools",
+      "scenario": "You need to add a new compute node to the BCM cluster and assign it to the gpu-nodes category from the command line so the change can be scripted.",
+      "choices": ["cmsh", "base-view", "cmha", "cm-create-image"],
+      "correctAnswer": "cmsh",
+      "explanation": "cmsh is the scripting-friendly BCM shell — non-interactive flags and -c lets you add the node, assign the category, and commit in a single automated invocation.",
+      "whyNotOthers": [
+        {
+          "tool": "base-view",
+          "reason": "Base View is a click-through web UI, not scriptable for repeatable provisioning workflows"
+        },
+        {
+          "tool": "cmha",
+          "reason": "cmha manages head-node High Availability, not compute-node provisioning"
+        },
+        {
+          "tool": "cm-create-image",
+          "reason": "cm-create-image builds the software image, not the node-to-category assignment"
+        }
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-bcm-q2",
+      "familyId": "bcm-tools",
+      "scenario": "An admin reports the BCM web dashboard is showing stale data after a recent change. They want to verify config sync between active and passive head nodes.",
+      "choices": ["cmsh", "base-view", "cmha", "cm-create-image"],
+      "correctAnswer": "cmha",
+      "explanation": "cmha status surfaces head-node HA state, last sync time, and whether the standby is healthy — the right tool to validate active/passive coherence.",
+      "whyNotOthers": [
+        {
+          "tool": "cmsh",
+          "reason": "cmsh can show config but does not directly expose HA sync state and replication lag"
+        },
+        {
+          "tool": "base-view",
+          "reason": "Base View shows the dashboard — but if it's stale, you need the HA tool to diagnose why"
+        },
+        {
+          "tool": "cm-create-image",
+          "reason": "Image creation is unrelated to head-node HA state"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-bcm-q3",
+      "familyId": "bcm-tools",
+      "scenario": "After applying a new NVIDIA driver, you want every compute node to receive it on next reboot via BCM provisioning.",
+      "choices": ["cmsh", "base-view", "cmha", "cm-create-image"],
+      "correctAnswer": "cm-create-image",
+      "explanation": "cm-create-image rebuilds (or updates) the software image used to provision nodes. After the image is updated, compute nodes pick up the new driver at the next provisioning boot.",
+      "whyNotOthers": [
+        {
+          "tool": "cmsh",
+          "reason": "cmsh can point a node to a different image, but the image itself must be (re)built with cm-create-image first"
+        },
+        {
+          "tool": "base-view",
+          "reason": "Base View shows image assignments but does not build images"
+        },
+        {
+          "tool": "cmha",
+          "reason": "cmha is for HA control, not image content"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-bcm-q4",
+      "familyId": "bcm-tools",
+      "scenario": "A new junior admin needs a visual cluster overview to see GPU utilization across nodes during onboarding.",
+      "choices": ["cmsh", "base-view", "cmha", "cm-create-image"],
+      "correctAnswer": "base-view",
+      "explanation": "Base View is the browser-based BCM dashboard built for click-through cluster monitoring and is the ideal entry point for new admins to visualize the cluster.",
+      "whyNotOthers": [
+        {
+          "tool": "cmsh",
+          "reason": "cmsh is a CLI — steeper learning curve and less visual"
+        },
+        {
+          "tool": "cmha",
+          "reason": "cmha is a narrow HA tool, not a general cluster overview"
+        },
+        {
+          "tool": "cm-create-image",
+          "reason": "Image builder, no monitoring view"
+        }
+      ],
+      "difficulty": "beginner"
+    },
+
+    {
+      "id": "aio-slurm-q1",
+      "familyId": "slurm-ops",
+      "scenario": "A data scientist submitted a multi-node training job but it has been pending for 30 minutes. You need to see WHY it's waiting.",
+      "choices": ["sbatch", "squeue", "sinfo", "sacct"],
+      "correctAnswer": "squeue",
+      "explanation": "squeue's REASON column (last column with %R) explains why a job is pending — Resources, Priority, ReqNodeNotAvail, QOSMaxGRESPerUser, etc. That is the diagnostic field.",
+      "whyNotOthers": [
+        {
+          "tool": "sbatch",
+          "reason": "sbatch submits jobs; it does not show why an existing job is pending"
+        },
+        {
+          "tool": "sinfo",
+          "reason": "sinfo shows node state — useful for ruling out drained nodes, but does not show job-specific reason"
+        },
+        {
+          "tool": "sacct",
+          "reason": "sacct shows accounting for past/finished jobs, not live queue reasons"
+        }
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-slurm-q2",
+      "familyId": "slurm-ops",
+      "scenario": "You need to drain node gpu-h100-04 for firmware maintenance without killing the running job on it.",
+      "choices": ["sinfo", "scontrol", "sacctmgr", "squeue"],
+      "correctAnswer": "scontrol",
+      "explanation": "scontrol update NodeName=gpu-h100-04 State=DRAIN sets the node to DRAIN, which prevents new jobs from being scheduled there while allowing the current job to finish.",
+      "whyNotOthers": [
+        {
+          "tool": "sinfo",
+          "reason": "sinfo is read-only — shows node state but cannot change it"
+        },
+        {
+          "tool": "sacctmgr",
+          "reason": "sacctmgr manages accounting database (accounts, QoS, associations), not node state"
+        },
+        {
+          "tool": "squeue",
+          "reason": "squeue lists jobs in the queue, cannot change node state"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-slurm-q3",
+      "familyId": "slurm-ops",
+      "scenario": "A new team needs to be onboarded with a 16-GPU quota and access to the ai partition.",
+      "choices": ["sbatch", "scontrol", "sacctmgr", "sacct"],
+      "correctAnswer": "sacctmgr",
+      "explanation": "sacctmgr creates the account, associates users to it with GrpTRES limits (gpu=16), and grants partition access. It is the user/quota administration tool in Slurm.",
+      "whyNotOthers": [
+        {
+          "tool": "sbatch",
+          "reason": "sbatch submits jobs; it does not configure quotas or accounts"
+        },
+        {
+          "tool": "scontrol",
+          "reason": "scontrol manages live cluster objects (jobs, nodes, partitions), not the accounting/quota database"
+        },
+        {
+          "tool": "sacct",
+          "reason": "sacct queries past usage; it cannot create accounts or set quotas"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-slurm-q4",
+      "familyId": "slurm-ops",
+      "scenario": "Last month's GPU usage report is due — broken down by account and including elapsed time, GPU TRES, and exit status.",
+      "choices": ["sbatch", "squeue", "sinfo", "sacct"],
+      "correctAnswer": "sacct",
+      "explanation": "sacct reads the accounting database and supports --format=Account,Elapsed,AllocTRES,State to produce per-account GPU usage reports.",
+      "whyNotOthers": [
+        {
+          "tool": "sbatch",
+          "reason": "sbatch is for submission, not reporting"
+        },
+        {
+          "tool": "squeue",
+          "reason": "squeue shows live jobs, not historical accounting"
+        },
+        {
+          "tool": "sinfo",
+          "reason": "sinfo shows node/partition state, not user/account accounting"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+
+    {
+      "id": "aio-k8s-q1",
+      "familyId": "kubernetes-ops",
+      "scenario": "You need to install the NVIDIA GPU Operator on a fresh Kubernetes cluster with default values.",
+      "choices": ["kubectl", "helm", "gpu-operator", "network-operator"],
+      "correctAnswer": "helm",
+      "explanation": "The GPU Operator is distributed as a Helm chart. helm install nvidia/gpu-operator is the recommended deployment path — kubectl alone cannot install the full chart with templated values.",
+      "whyNotOthers": [
+        {
+          "tool": "kubectl",
+          "reason": "kubectl can apply rendered manifests but does not handle Helm chart templating, dependencies, or versioned releases"
+        },
+        {
+          "tool": "gpu-operator",
+          "reason": "gpu-operator is what you are installing — it is not the installer"
+        },
+        {
+          "tool": "network-operator",
+          "reason": "network-operator enables RDMA networking, not GPU support"
+        }
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-k8s-q2",
+      "familyId": "kubernetes-ops",
+      "scenario": "A pod requesting 1 GPU is stuck in Pending state — you suspect the device plugin isn't advertising GPU resources.",
+      "choices": ["kubectl", "helm", "gpu-operator", "network-operator"],
+      "correctAnswer": "kubectl",
+      "explanation": "kubectl describe node <name> shows the node's allocatable resources including nvidia.com/gpu. kubectl describe pod shows scheduling events. These are the first-line diagnostics.",
+      "whyNotOthers": [
+        {
+          "tool": "helm",
+          "reason": "helm manages releases, not pod scheduling diagnostics"
+        },
+        {
+          "tool": "gpu-operator",
+          "reason": "GPU Operator is the system being diagnosed — kubectl is the tool to inspect it"
+        },
+        {
+          "tool": "network-operator",
+          "reason": "Network Operator is unrelated to GPU device plugin"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-k8s-q3",
+      "familyId": "kubernetes-ops",
+      "scenario": "Inference pods need GPUDirect RDMA over InfiniBand for ultra-low-latency multi-pod communication.",
+      "choices": ["kubectl", "helm", "gpu-operator", "network-operator"],
+      "correctAnswer": "network-operator",
+      "explanation": "The NVIDIA Network Operator deploys MOFED, NV peer-memory, RDMA shared device plugin, and Multus — the stack required for GPUDirect RDMA from K8s pods.",
+      "whyNotOthers": [
+        {
+          "tool": "kubectl",
+          "reason": "kubectl is the client CLI — the RDMA stack must be installed by the Network Operator first"
+        },
+        {
+          "tool": "helm",
+          "reason": "helm installs the Network Operator chart, but the Network Operator is the component that provides the capability"
+        },
+        {
+          "tool": "gpu-operator",
+          "reason": "GPU Operator handles compute (drivers, device plugin), not RDMA networking"
+        }
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-k8s-q4",
+      "familyId": "kubernetes-ops",
+      "scenario": "You want to validate that all nodes labeled for AI workloads have completed GPU Operator readiness checks.",
+      "choices": ["kubectl", "helm", "gpu-operator", "network-operator"],
+      "correctAnswer": "gpu-operator",
+      "explanation": "The GPU Operator stack includes the validation daemonset (nvidia-operator-validator) — its pods report success only when drivers, toolkit, device plugin, and CUDA validation all pass on a given node.",
+      "whyNotOthers": [
+        {
+          "tool": "kubectl",
+          "reason": "kubectl queries the state but the validation logic comes from GPU Operator components"
+        },
+        {
+          "tool": "helm",
+          "reason": "helm tracks release health, not per-node GPU readiness"
+        },
+        {
+          "tool": "network-operator",
+          "reason": "Network Operator validates RDMA, not GPU compute readiness"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+
+    {
+      "id": "aio-runai-q1",
+      "familyId": "runai-ops",
+      "scenario": "A data scientist wants to submit a single-GPU PyTorch training job to their team's Run:ai project from the command line.",
+      "choices": ["runai", "runai-project", "runai-inference", "kubectl"],
+      "correctAnswer": "runai",
+      "explanation": "runai submit is the daily-driver Run:ai CLI command for training and interactive workloads — it handles auth, project context, image, and resource flags.",
+      "whyNotOthers": [
+        {
+          "tool": "runai-project",
+          "reason": "Projects are configured by admins via the UI or CRDs — data scientists submit into them"
+        },
+        {
+          "tool": "runai-inference",
+          "reason": "Inference workloads use a different submit type — this is a training job"
+        },
+        {
+          "tool": "kubectl",
+          "reason": "kubectl works but bypasses Run:ai's policy/quota enforcement — runai is the supported submission path"
+        }
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-runai-q2",
+      "familyId": "runai-ops",
+      "scenario": "Two teams need different GPU quotas (team-a: 32 GPUs, team-b: 16 GPUs) with team-a allowed to burst into team-b's idle GPUs.",
+      "choices": ["runai", "runai-project", "runai-inference", "kubectl"],
+      "correctAnswer": "runai-project",
+      "explanation": "Run:ai Project CRDs hold quotas, over-quota policy, and department bindings — this is the resource the admin configures to express per-team GPU limits and burst behavior.",
+      "whyNotOthers": [
+        {
+          "tool": "runai",
+          "reason": "The CLI submits workloads; quotas live in the Project resource"
+        },
+        {
+          "tool": "runai-inference",
+          "reason": "Inference resources do not define quotas — projects do"
+        },
+        {
+          "tool": "kubectl",
+          "reason": "kubectl can edit the Project CRD, but the conceptual object is the Run:ai Project — the admin needs to know that abstraction"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-runai-q3",
+      "familyId": "runai-ops",
+      "scenario": "An LLM inference endpoint should auto-scale from 0 to N replicas based on incoming request traffic and serve fractional GPUs.",
+      "choices": ["runai", "runai-project", "runai-inference", "kubectl"],
+      "correctAnswer": "runai-inference",
+      "explanation": "Run:ai inference workloads use scale-to-zero autoscaling (KServe/Knative under the hood) and support fractional GPU allocation — exactly the requirements stated.",
+      "whyNotOthers": [
+        {
+          "tool": "runai",
+          "reason": "runai is the CLI umbrella — the specific submit type is the inference workload"
+        },
+        {
+          "tool": "runai-project",
+          "reason": "Projects set policy; they do not define the workload type"
+        },
+        {
+          "tool": "kubectl",
+          "reason": "kubectl can create the resource but the abstraction here is Run:ai's inference workload kind"
+        }
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-runai-q4",
+      "familyId": "runai-ops",
+      "scenario": "Run:ai workloads are pending, and you suspect the underlying Kubernetes scheduler is rejecting them — you need to inspect the raw pod events.",
+      "choices": ["runai", "runai-project", "runai-inference", "kubectl"],
+      "correctAnswer": "kubectl",
+      "explanation": "When Run:ai workloads stall, dropping down to kubectl describe pod and kubectl get events surfaces the underlying K8s reason (Insufficient resources, Taint/Toleration mismatch, etc.) that Run:ai's UI may abbreviate.",
+      "whyNotOthers": [
+        {
+          "tool": "runai",
+          "reason": "runai describe gives Run:ai-level state but not the full Kubernetes events"
+        },
+        {
+          "tool": "runai-project",
+          "reason": "Project resource doesn't surface pod-level scheduler events"
+        },
+        {
+          "tool": "runai-inference",
+          "reason": "Inference resource doesn't expose raw scheduler events"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+
+    {
+      "id": "aio-container-q1",
+      "familyId": "container-deploy",
+      "scenario": "A developer wants to test an NGC PyTorch image locally on a single workstation before submitting to the cluster.",
+      "choices": ["docker", "enroot", "pyxis", "ngc"],
+      "correctAnswer": "docker",
+      "explanation": "Docker with the NVIDIA Container Toolkit is the standard single-node workflow for pulling and running NGC GPU containers interactively.",
+      "whyNotOthers": [
+        {
+          "tool": "enroot",
+          "reason": "Enroot is geared toward Slurm/HPC environments without root; overkill for single-workstation interactive testing"
+        },
+        {
+          "tool": "pyxis",
+          "reason": "Pyxis is a Slurm plugin — it only runs inside a Slurm job context"
+        },
+        {
+          "tool": "ngc",
+          "reason": "ngc is the registry CLI for pulling/listing — actually running the container is docker's job"
+        }
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-container-q2",
+      "familyId": "container-deploy",
+      "scenario": "A Slurm multi-node training job must run inside a container without requiring root on compute nodes.",
+      "choices": ["docker", "enroot", "pyxis", "ngc"],
+      "correctAnswer": "pyxis",
+      "explanation": "Pyxis is the Slurm SPANK plugin (backed by Enroot) that lets srun/sbatch launch containers with --container-image as the unprivileged user. It is the supported HPC pattern.",
+      "whyNotOthers": [
+        {
+          "tool": "docker",
+          "reason": "Docker requires root or docker-group access and is not the HPC standard for multi-node containers under Slurm"
+        },
+        {
+          "tool": "enroot",
+          "reason": "Enroot is the runtime backend, but Pyxis is what integrates it with srun/sbatch — and the question asks for the Slurm-integrated answer"
+        },
+        { "tool": "ngc", "reason": "ngc is the registry CLI, not a runtime" }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-container-q3",
+      "familyId": "container-deploy",
+      "scenario": "Authenticate to NGC and pull a private team-restricted NIM image into the local registry cache.",
+      "choices": ["docker", "enroot", "pyxis", "ngc"],
+      "correctAnswer": "ngc",
+      "explanation": "The ngc CLI handles NGC authentication, org/team context, and listing/pulling private team images. After ngc login, docker pull also works, but ngc is the canonical registry tool.",
+      "whyNotOthers": [
+        {
+          "tool": "docker",
+          "reason": "Docker pulls but does not handle NGC org/team auth or token rotation natively"
+        },
+        {
+          "tool": "enroot",
+          "reason": "Enroot imports images but does not provide NGC org/team auth flow"
+        },
+        {
+          "tool": "pyxis",
+          "reason": "Pyxis is a Slurm runtime plugin — it does not authenticate to registries"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-container-q4",
+      "familyId": "container-deploy",
+      "scenario": "Convert a Docker image to a squashfs format suitable for unprivileged HPC container execution.",
+      "choices": ["docker", "enroot", "pyxis", "ngc"],
+      "correctAnswer": "enroot",
+      "explanation": "enroot import converts a Docker/OCI image into an Enroot squashfs bundle that runs unprivileged — the standard HPC import step.",
+      "whyNotOthers": [
+        {
+          "tool": "docker",
+          "reason": "Docker produces overlay-filesystem images, not Enroot squashfs bundles"
+        },
+        {
+          "tool": "pyxis",
+          "reason": "Pyxis consumes Enroot bundles but does not produce them"
+        },
+        {
+          "tool": "ngc",
+          "reason": "ngc pulls but does not convert to Enroot format"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+
+    {
+      "id": "aio-gpuadmin-q1",
+      "familyId": "gpu-admin",
+      "scenario": "You need to partition an H100 GPU into 7 small MIG instances to serve many small inference replicas.",
+      "choices": ["nvidia-smi", "nvidia-smi mig", "dcgmi", "dcgm-exporter"],
+      "correctAnswer": "nvidia-smi mig",
+      "explanation": "nvidia-smi mig is the dedicated MIG sub-command for listing profiles, creating GPU Instances (GI) and Compute Instances (CI). It's the right tool for the partitioning step.",
+      "whyNotOthers": [
+        {
+          "tool": "nvidia-smi",
+          "reason": "nvidia-smi -mig 1 enables MIG mode, but partitioning is done through the mig sub-command"
+        },
+        {
+          "tool": "dcgmi",
+          "reason": "dcgmi monitors and diagnoses; it does not configure MIG partitions"
+        },
+        {
+          "tool": "dcgm-exporter",
+          "reason": "dcgm-exporter publishes telemetry, not configuration"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-gpuadmin-q2",
+      "familyId": "gpu-admin",
+      "scenario": "Job start-up latency on a multi-tenant cluster is high because the GPU driver unloads between jobs.",
+      "choices": ["nvidia-smi", "nvidia-smi mig", "dcgmi", "dcgm-exporter"],
+      "correctAnswer": "nvidia-smi",
+      "explanation": "nvidia-smi -pm 1 enables persistence mode so the driver stays loaded even when no processes are active — eliminating the cold-start tax between jobs.",
+      "whyNotOthers": [
+        {
+          "tool": "nvidia-smi mig",
+          "reason": "MIG sub-command is for partitioning, not driver persistence"
+        },
+        {
+          "tool": "dcgmi",
+          "reason": "dcgmi can observe but does not set persistence mode"
+        },
+        {
+          "tool": "dcgm-exporter",
+          "reason": "Exporter publishes metrics; cannot configure driver behavior"
+        }
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-gpuadmin-q3",
+      "familyId": "gpu-admin",
+      "scenario": "You want a live 1-second-resolution dashboard of GPU utilization, memory, SM occupancy, and ECC errors during a training run.",
+      "choices": ["nvidia-smi", "nvidia-smi mig", "dcgmi", "dcgm-exporter"],
+      "correctAnswer": "dcgmi",
+      "explanation": "dcgmi dmon supports rich field IDs (utilization, memory, ECC, NVLink) at sub-second resolution — designed for live ops dashboards in the terminal.",
+      "whyNotOthers": [
+        {
+          "tool": "nvidia-smi",
+          "reason": "nvidia-smi dmon is similar but exposes fewer fields, especially fewer DCGM-specific metrics like ECC events"
+        },
+        {
+          "tool": "nvidia-smi mig",
+          "reason": "MIG sub-command is for partitioning, not monitoring"
+        },
+        {
+          "tool": "dcgm-exporter",
+          "reason": "Exporter is for Prometheus scrape — not interactive terminal dashboards"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-gpuadmin-q4",
+      "familyId": "gpu-admin",
+      "scenario": "Prometheus needs to scrape GPU metrics from every node in the cluster for long-term dashboards.",
+      "choices": ["nvidia-smi", "nvidia-smi mig", "dcgmi", "dcgm-exporter"],
+      "correctAnswer": "dcgm-exporter",
+      "explanation": "dcgm-exporter exposes DCGM metrics in Prometheus format — typically deployed as a daemonset via GPU Operator. It is the bridge from DCGM to your observability stack.",
+      "whyNotOthers": [
+        {
+          "tool": "nvidia-smi",
+          "reason": "Not a Prometheus exporter; would require a wrapper to parse output"
+        },
+        {
+          "tool": "nvidia-smi mig",
+          "reason": "MIG sub-command does not export metrics"
+        },
+        {
+          "tool": "dcgmi",
+          "reason": "dcgmi is interactive — not a /metrics endpoint"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+
+    {
+      "id": "aio-fabric-q1",
+      "familyId": "fabric-storage",
+      "scenario": "Multi-GPU NCCL tests on a DGX H100 are getting only 1/8 the expected bandwidth — you suspect the NVSwitch fabric isn't fully initialized.",
+      "choices": ["nv-fabricmanager", "ibstat", "ib_write_bw", "ibdiagnet"],
+      "correctAnswer": "nv-fabricmanager",
+      "explanation": "On HGX/DGX systems, Fabric Manager must be running for NVSwitch to form the full NVLink mesh. systemctl status nvidia-fabricmanager is the first check when intra-node NCCL collapses to PCIe rates.",
+      "whyNotOthers": [
+        {
+          "tool": "ibstat",
+          "reason": "ibstat checks InfiniBand ports between nodes — not NVLink within a node"
+        },
+        {
+          "tool": "ib_write_bw",
+          "reason": "Measures IB bandwidth between nodes, irrelevant for intra-node NVLink"
+        },
+        {
+          "tool": "ibdiagnet",
+          "reason": "Diagnoses InfiniBand subnet, not NVSwitch fabric"
+        }
+      ],
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-fabric-q2",
+      "familyId": "fabric-storage",
+      "scenario": "A new compute node was added and you want to confirm both of its InfiniBand HCA ports are Active and at 400Gbps.",
+      "choices": ["nv-fabricmanager", "ibstat", "ib_write_bw", "ibdiagnet"],
+      "correctAnswer": "ibstat",
+      "explanation": "ibstat lists each HCA port with State, Physical state, Rate, and LID — the canonical first command to verify IB port health and link rate.",
+      "whyNotOthers": [
+        {
+          "tool": "nv-fabricmanager",
+          "reason": "Fabric Manager is for NVSwitch (intra-node NVLink), not InfiniBand ports"
+        },
+        {
+          "tool": "ib_write_bw",
+          "reason": "Measures performance — but you first need to confirm the port is even Active"
+        },
+        {
+          "tool": "ibdiagnet",
+          "reason": "ibdiagnet works across the whole fabric; ibstat is the focused per-node check"
+        }
+      ],
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-fabric-q3",
+      "familyId": "fabric-storage",
+      "scenario": "Acceptance testing requires you to validate the actual end-to-end RDMA write bandwidth between two new compute nodes.",
+      "choices": ["nv-fabricmanager", "ibstat", "ib_write_bw", "ibdiagnet"],
+      "correctAnswer": "ib_write_bw",
+      "explanation": "ib_write_bw is the canonical point-to-point RDMA write benchmark — run as a server on one node and client on the other to measure achieved bandwidth.",
+      "whyNotOthers": [
+        {
+          "tool": "nv-fabricmanager",
+          "reason": "Manages NVSwitch fabric, not IB benchmarks"
+        },
+        {
+          "tool": "ibstat",
+          "reason": "ibstat shows port state but does not run traffic to measure throughput"
+        },
+        {
+          "tool": "ibdiagnet",
+          "reason": "ibdiagnet diagnoses fabric health but is not a bandwidth benchmark tool"
+        }
+      ],
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-fabric-q4",
+      "familyId": "fabric-storage",
+      "scenario": "Post-installation, sporadic NCCL hangs are suspected to come from a flapping IB port somewhere in the fabric. You want a cluster-wide error report.",
+      "choices": ["nv-fabricmanager", "ibstat", "ib_write_bw", "ibdiagnet"],
+      "correctAnswer": "ibdiagnet",
+      "explanation": "ibdiagnet --pc scans the entire subnet, walks the routing tables, and reports port-counter errors across every switch and HCA — the right tool to find the rogue link.",
+      "whyNotOthers": [
+        {
+          "tool": "nv-fabricmanager",
+          "reason": "Out of scope — Fabric Manager is intra-node NVSwitch"
+        },
+        {
+          "tool": "ibstat",
+          "reason": "ibstat is per-node; you would have to script it across the whole cluster — ibdiagnet does it natively"
+        },
+        {
+          "tool": "ib_write_bw",
+          "reason": "A bandwidth tester, not a fabric-wide diagnostic"
+        }
+      ],
+      "difficulty": "advanced"
+    }
+  ]
+}

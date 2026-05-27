@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { SimulatorView } from "./components/SimulatorView";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { useCertificationModeStore } from "./store/certificationModeStore";
 
 // Lazy-loaded views (not needed on the default Simulator tab)
 const LabsAndScenariosView = lazy(() =>
@@ -72,6 +73,8 @@ const ViewFallback = () => (
 );
 
 function App() {
+  const certMode = useCertificationModeStore((s) => s.mode);
+  const certShortName = certMode === "aio" ? "NCP-AIO" : "NCP-AII";
   const [currentView, setCurrentView] = useState<View>("simulator");
   const [showLabWorkspace, setShowLabWorkspace] = useState(false);
   const [showExamWorkspace, setShowExamWorkspace] = useState(false);
@@ -405,7 +408,7 @@ function App() {
                 </span>
                 <span className="hidden sm:inline">&bull;</span>
                 <span className="hidden sm:inline">
-                  NCP-AII Training Environment
+                  {certShortName} Training Environment
                 </span>
               </div>
             </div>

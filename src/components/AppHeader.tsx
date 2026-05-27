@@ -16,6 +16,11 @@ import { UserMenu } from "./UserMenu";
 import { FeedbackModal } from "./FeedbackModal";
 import type { ClusterConfig } from "../types/hardware";
 import type { SyncStatus } from "../hooks/useCloudSync";
+import {
+  useCertificationModeStore,
+  CERT_MODE_INFO,
+  type CertificationMode,
+} from "../store/certificationModeStore";
 
 export type View = "simulator" | "labs" | "exams" | "reference" | "about";
 
@@ -58,6 +63,19 @@ export function AppHeader({
 }: AppHeaderProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [triggerSignIn, setTriggerSignIn] = useState(false);
+  const certMode = useCertificationModeStore((s) => s.mode);
+  const setCertMode = useCertificationModeStore((s) => s.setMode);
+  const certInfo = CERT_MODE_INFO[certMode];
+
+  const handleCertModeChange = (next: CertificationMode) => {
+    if (next === certMode) return;
+    setCertMode(next);
+    // Reload so cached scenario/exam data fully resets and persisted progress
+    // stores re-read with the new cert's domain blueprint.
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
+  };
 
   return (
     <>
@@ -103,9 +121,41 @@ export function AppHeader({
                       Data Center Lab Simulator
                     </h1>
                     <p className="text-xs text-gray-400">
-                      NCP-AII Certification Training Environment
+                      {certInfo.shortName} Certification Training Environment
                     </p>
                   </div>
+                </div>
+                {/* Cert mode toggle */}
+                <div
+                  className="flex items-center gap-1 bg-gray-900 border border-gray-700 rounded-lg p-1"
+                  role="group"
+                  aria-label="Certification mode"
+                  title="Switch between NCP-AII (AI Infrastructure) and NCP-AIO (AI Operations) content"
+                >
+                  <button
+                    onClick={() => handleCertModeChange("aii")}
+                    className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                      certMode === "aii"
+                        ? "bg-nvidia-green text-black"
+                        : "text-gray-400 hover:text-gray-200"
+                    }`}
+                    aria-pressed={certMode === "aii"}
+                    data-testid="cert-mode-aii"
+                  >
+                    AII
+                  </button>
+                  <button
+                    onClick={() => handleCertModeChange("aio")}
+                    className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                      certMode === "aio"
+                        ? "bg-nvidia-green text-black"
+                        : "text-gray-400 hover:text-gray-200"
+                    }`}
+                    aria-pressed={certMode === "aio"}
+                    data-testid="cert-mode-aio"
+                  >
+                    AIO
+                  </button>
                 </div>
               </div>
 

@@ -9,6 +9,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { CheckCircle, XCircle, AlertCircle, Lightbulb } from "lucide-react";
 import { useLearningProgressStore } from "../store/learningProgressStore";
+import { useCertificationModeStore } from "../store/certificationModeStore";
 
 // ============================================================================
 // TYPES
@@ -52,11 +53,16 @@ export const ExplanationGate: React.FC<ExplanationGateProps> = ({
   const [explanationGatesData, setExplanationGatesData] =
     useState<ExplanationGatesJson | null>(null);
 
+  const certMode = useCertificationModeStore((s) => s.mode);
   useEffect(() => {
-    import("../data/explanationGates.json").then((m) =>
+    const loader =
+      certMode === "aio"
+        ? import("../data/aio/aioExplanationGates.json")
+        : import("../data/explanationGates.json");
+    loader.then((m) =>
       setExplanationGatesData(m.default as ExplanationGatesJson),
     );
-  }, []);
+  }, [certMode]);
 
   // Load gate data
   const gateData = useMemo(() => {

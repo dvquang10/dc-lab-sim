@@ -1,0 +1,346 @@
+{
+  "families": [
+    {
+      "id": "bcm-tools",
+      "name": "Base Command Manager",
+      "icon": "🎛️",
+      "description": "BCM cluster management for AI infrastructure — provisioning, monitoring, configuration, and health management via cmsh and Base View",
+      "quickRule": "Interactive shell? cmsh. Web UI? Base View. Health roles? cmha. Image management? cm-create-image.",
+      "tools": [
+        {
+          "name": "cmsh",
+          "tagline": "Cluster shell",
+          "description": "Interactive BCM cluster management shell for navigating modes (device, partition, network, category, software image) and applying configuration changes",
+          "bestFor": "Add/remove nodes, edit categories, update network settings, apply provisioning images, commit configuration changes from CLI",
+          "exampleCommand": "cmsh -c 'device; use node001; status'",
+          "permissions": "root",
+          "relatedTools": ["base-view", "cmha", "cm-create-image"]
+        },
+        {
+          "name": "base-view",
+          "tagline": "BCM web UI",
+          "description": "Base View browser interface for cluster monitoring, configuration, workload visibility, and health dashboards on the head node",
+          "bestFor": "Visual cluster overview, workload monitoring, GPU utilization heatmaps, click-through configuration, day-2 operations",
+          "exampleCommand": "https://head-node:8081 (Base View)",
+          "permissions": "admin",
+          "relatedTools": ["cmsh", "cmha"]
+        },
+        {
+          "name": "cmha",
+          "tagline": "HA management",
+          "description": "Manage BCM head-node High Availability — view roles, failover, sync state between active/passive heads",
+          "bestFor": "Check HA status, force failover for maintenance, validate config sync between head nodes, troubleshoot split-brain",
+          "exampleCommand": "cmha status",
+          "permissions": "root",
+          "relatedTools": ["cmsh", "base-view"]
+        },
+        {
+          "name": "cm-create-image",
+          "tagline": "Image builder",
+          "description": "Create or update BCM software images used to provision compute nodes (kernel, userland, NVIDIA stack)",
+          "bestFor": "Build a new compute-node image, update existing image with driver/firmware versions, manage image categories",
+          "exampleCommand": "cm-create-image --update default-image",
+          "permissions": "root",
+          "relatedTools": ["cmsh"]
+        }
+      ]
+    },
+    {
+      "id": "slurm-ops",
+      "name": "Slurm Operations",
+      "icon": "🗂️",
+      "description": "Slurm workload manager for training/inference jobs on AI clusters — submit, monitor, account, and administer GPU jobs with GRES and MIG",
+      "quickRule": "Submit batch? sbatch. Interactive? srun. Queue? squeue. Nodes? sinfo. Accounting? sacct/sacctmgr.",
+      "tools": [
+        {
+          "name": "sbatch",
+          "tagline": "Batch submit",
+          "description": "Submit a non-interactive batch script to Slurm with GPU GRES, MIG profile, partition, QoS, and time limits",
+          "bestFor": "Training jobs, multi-node MPI/NCCL runs, scheduled inference batch, reproducible job submissions",
+          "exampleCommand": "sbatch --gres=gpu:8 --nodes=4 --partition=ai train.sh",
+          "permissions": "user",
+          "relatedTools": ["srun", "squeue", "sacct"]
+        },
+        {
+          "name": "srun",
+          "tagline": "Interactive/launch",
+          "description": "Run a job step interactively or inside a batch script — drives task launch, container integration via pyxis, and resource binding",
+          "bestFor": "Interactive debug sessions, container execution with --container-image, parallel step launch within an sbatch script",
+          "exampleCommand": "srun --gres=gpu:1 --pty bash",
+          "permissions": "user",
+          "relatedTools": ["sbatch", "pyxis"]
+        },
+        {
+          "name": "squeue",
+          "tagline": "Queue view",
+          "description": "Show pending and running jobs, partitions, priority, GRES allocation, and reasons for pending state",
+          "bestFor": "Check why a job is pending (Reason field), see queue depth per partition, monitor your team's running jobs",
+          "exampleCommand": "squeue -p ai --format=\"%.10i %.9P %.20j %.8u %.2t %.10M %.6D %R\"",
+          "permissions": "user",
+          "relatedTools": ["sinfo", "scontrol"]
+        },
+        {
+          "name": "sinfo",
+          "tagline": "Node/partition state",
+          "description": "Show partition definitions, node states (idle/mix/alloc/drain/down), GRES, and features",
+          "bestFor": "Find drained nodes, check partition limits, see GPU availability per node, validate scheduler view of fabric",
+          "exampleCommand": "sinfo -N -o \"%N %t %P %G %f\"",
+          "permissions": "user",
+          "relatedTools": ["scontrol", "squeue"]
+        },
+        {
+          "name": "scontrol",
+          "tagline": "Admin control",
+          "description": "Inspect and modify jobs, nodes, partitions, reservations — drain a node, requeue a job, view full job/node detail",
+          "bestFor": "Drain node for maintenance, modify a pending job's resources, view scontrol show node for full state, reservations",
+          "exampleCommand": "scontrol update NodeName=node001 State=DRAIN Reason=maintenance",
+          "permissions": "root",
+          "relatedTools": ["sinfo", "squeue", "sacctmgr"]
+        },
+        {
+          "name": "sacct",
+          "tagline": "Job accounting",
+          "description": "Query Slurm accounting database for completed/failed jobs — elapsed time, MaxRSS, exit code, GPU TRES",
+          "bestFor": "Audit GPU usage by project, post-mortem failed jobs, chargeback reports, troubleshoot OOM/timeout",
+          "exampleCommand": "sacct -X -S 2026-05-01 --format=JobID,Account,Elapsed,AllocTRES,State,ExitCode",
+          "permissions": "user",
+          "relatedTools": ["sacctmgr", "scontrol"]
+        },
+        {
+          "name": "sacctmgr",
+          "tagline": "Accounting admin",
+          "description": "Manage Slurm accounts, users, associations, QoS, and fair-share — the source of truth for who can submit to which partition",
+          "bestFor": "Onboard new project/team, set GrpTRES limits per account, configure QoS, set fair-share weights, audit associations",
+          "exampleCommand": "sacctmgr add account ml-research Description=\"ML Research\" Organization=ai",
+          "permissions": "root",
+          "relatedTools": ["scontrol", "sacct"]
+        }
+      ]
+    },
+    {
+      "id": "kubernetes-ops",
+      "name": "Kubernetes Operations",
+      "icon": "☸️",
+      "description": "Kubernetes-based AI workload management with NVIDIA GPU Operator, Network Operator, and DOCA Operator for inference and microservices",
+      "quickRule": "Cluster CLI? kubectl. Charts? helm. GPU support? GPU Operator. Networking? Network Operator. DPU? DOCA Operator.",
+      "tools": [
+        {
+          "name": "kubectl",
+          "tagline": "K8s CLI",
+          "description": "Primary Kubernetes CLI — view nodes/pods, apply manifests, inspect logs, exec into pods, manage namespaces and RBAC",
+          "bestFor": "Inspect cluster state, deploy inference services, view GPU operator pods, debug failing inference pods, RBAC management",
+          "exampleCommand": "kubectl get pods -n gpu-operator -o wide",
+          "permissions": "user/admin",
+          "relatedTools": ["helm", "gpu-operator"]
+        },
+        {
+          "name": "helm",
+          "tagline": "Chart manager",
+          "description": "Kubernetes package manager — install/upgrade/uninstall charts (GPU Operator, Network Operator, NIM, monitoring stacks)",
+          "bestFor": "Install NVIDIA GPU Operator, deploy NIM inference, upgrade chart versions, manage release values per environment",
+          "exampleCommand": "helm install gpu-operator nvidia/gpu-operator -n gpu-operator --create-namespace",
+          "permissions": "admin",
+          "relatedTools": ["kubectl"]
+        },
+        {
+          "name": "gpu-operator",
+          "tagline": "GPU enablement",
+          "description": "NVIDIA GPU Operator stack — driver daemonset, container toolkit, device plugin, DCGM exporter, MIG manager",
+          "bestFor": "Auto-deploy drivers/toolkit/device-plugin per node, validate GPU readiness, configure MIG profiles, expose DCGM metrics",
+          "exampleCommand": "kubectl describe clusterpolicy/cluster-policy",
+          "permissions": "admin",
+          "relatedTools": ["helm", "kubectl", "dcgm-exporter"]
+        },
+        {
+          "name": "network-operator",
+          "tagline": "RDMA networking",
+          "description": "Deploys MOFED, NV peer memory, RDMA shared device plugin, and Multus for high-performance K8s networking on InfiniBand/RoCE",
+          "bestFor": "Enable GPUDirect RDMA in K8s, expose IB devices to pods, configure secondary networks (Multus), DOCA host integration",
+          "exampleCommand": "kubectl get pods -n network-operator",
+          "permissions": "admin",
+          "relatedTools": ["helm", "kubectl", "doca-operator"]
+        }
+      ]
+    },
+    {
+      "id": "runai-ops",
+      "name": "Run:ai Operations",
+      "icon": "🧪",
+      "description": "Run:ai workload orchestration on top of Kubernetes — projects, departments, fractional GPUs, gang scheduling, quotas for AI teams",
+      "quickRule": "User CLI? runai. Submit training? runai submit. Submit inference? runai submit --inference. Quotas? Run:ai UI / kubectl.",
+      "tools": [
+        {
+          "name": "runai",
+          "tagline": "Run:ai CLI",
+          "description": "Command-line client for Run:ai — login, switch projects, submit jobs, view workload status, exec into pods",
+          "bestFor": "Day-to-day data scientist workflow, submit training/interactive/inference workloads, list workloads, get logs",
+          "exampleCommand": "runai submit training-job -p team-a -i nvcr.io/nvidia/pytorch:24.01-py3 -g 1",
+          "permissions": "user",
+          "relatedTools": ["kubectl", "helm"]
+        },
+        {
+          "name": "runai-project",
+          "tagline": "Project mgmt",
+          "description": "Run:ai project resource — quotas, departments, fairness, over-quota policy, node-pool bindings (via UI or kubectl on Run:ai CRDs)",
+          "bestFor": "Set per-team GPU quotas, configure department hierarchies, enable fractional/MIG GPU sharing, govern resource fairness",
+          "exampleCommand": "kubectl get projects.run.ai -A",
+          "permissions": "admin",
+          "relatedTools": ["runai", "kubectl"]
+        },
+        {
+          "name": "runai-inference",
+          "tagline": "Inference workload",
+          "description": "Submit inference workloads with autoscaling, scale-to-zero, model serving — backed by Knative/KServe under the hood",
+          "bestFor": "Deploy production inference endpoints, autoscale by traffic, A/B model versions, fractional GPU inference",
+          "exampleCommand": "runai submit inference my-llm --image my/llm:1.0 -g 0.5 --port 8000",
+          "permissions": "user",
+          "relatedTools": ["runai", "kubectl"]
+        }
+      ]
+    },
+    {
+      "id": "container-deploy",
+      "name": "Containers & NGC",
+      "icon": "📦",
+      "description": "Container runtimes and NGC registry for delivering AI workloads — Docker for dev, Enroot/Pyxis for Slurm, NGC for curated images",
+      "quickRule": "Dev? docker. Slurm? pyxis+enroot. Registry? ngc. K8s manifests reference NGC images directly.",
+      "tools": [
+        {
+          "name": "docker",
+          "tagline": "Container runtime",
+          "description": "Docker CLI with NVIDIA Container Toolkit for running GPU containers locally — pull from NGC, run, inspect, troubleshoot",
+          "bestFor": "Single-node dev/test, pulling NGC images, smoke-test inference containers, troubleshoot container startup failures",
+          "exampleCommand": "docker run --rm --gpus all nvcr.io/nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi",
+          "permissions": "user (docker group)",
+          "relatedTools": ["enroot", "ngc"]
+        },
+        {
+          "name": "enroot",
+          "tagline": "HPC unpriv runtime",
+          "description": "NVIDIA unprivileged container runtime — converts Docker/OCI images to squashfs, runs as user inside Slurm jobs",
+          "bestFor": "Run containers under Slurm without root, fast image fan-out via shared filesystem, reproducible HPC environments",
+          "exampleCommand": "enroot import docker://nvcr.io#nvidia/pytorch:24.01-py3",
+          "permissions": "user",
+          "relatedTools": ["docker", "pyxis"]
+        },
+        {
+          "name": "pyxis",
+          "tagline": "Slurm container plugin",
+          "description": "Slurm SPANK plugin that integrates Enroot with srun/sbatch — adds --container-image and --container-mounts to job launch",
+          "bestFor": "Run multi-node distributed training in containers via Slurm, mount shared datasets/model dirs, deterministic environment",
+          "exampleCommand": "srun --container-image=nvcr.io#nvidia/pytorch:24.01-py3 --container-mounts=/data:/data python train.py",
+          "permissions": "user",
+          "relatedTools": ["enroot", "sbatch"]
+        },
+        {
+          "name": "ngc",
+          "tagline": "NGC CLI",
+          "description": "NVIDIA NGC CLI — auth, pull/push containers, manage org/team registry, list NeMo/RAPIDS/NIM assets",
+          "bestFor": "Authenticate to NGC, pull private team images, push fine-tuned models, list available container versions",
+          "exampleCommand": "ngc registry image list 'nvidia/*' --format_type csv",
+          "permissions": "user",
+          "relatedTools": ["docker", "enroot"]
+        }
+      ]
+    },
+    {
+      "id": "gpu-admin",
+      "name": "GPU Administration",
+      "icon": "🎛️",
+      "description": "Day-2 GPU configuration for AI clusters — MIG partitioning, persistence mode, compute mode, DCGM monitoring",
+      "quickRule": "MIG config? nvidia-smi mig. Telemetry? dcgm-exporter+dcgmi. Health check? dcgmi diag. Quick status? nvidia-smi.",
+      "tools": [
+        {
+          "name": "nvidia-smi",
+          "tagline": "GPU CLI",
+          "description": "Configure persistence/compute mode, enable/disable MIG, query telemetry, set power/clock limits, view processes",
+          "bestFor": "Enable MIG mode pre-partition, set persistence for low job-start latency, query telemetry for ops dashboards, manage power caps",
+          "exampleCommand": "nvidia-smi -i 0 -mig 1 && nvidia-smi mig -i 0 -cgi 19,19,19,19,19,19,19 -C",
+          "permissions": "root for config, user for query",
+          "relatedTools": ["dcgmi", "nvidia-smi mig"]
+        },
+        {
+          "name": "nvidia-smi mig",
+          "tagline": "MIG partition",
+          "description": "Create/destroy MIG GPU and Compute Instances, list profiles, view current partitioning per GPU",
+          "bestFor": "Partition H100/A100 GPUs for multi-tenant inference, create heterogeneous instance sizes, destroy and reconfigure on schedule",
+          "exampleCommand": "nvidia-smi mig -lgip   # list GPU instance profiles",
+          "permissions": "root",
+          "relatedTools": ["nvidia-smi", "gpu-operator (MIG manager)"]
+        },
+        {
+          "name": "dcgmi",
+          "tagline": "DCGM CLI",
+          "description": "Configure DCGM groups, policies, run live telemetry (dcgmi dmon), inspect health and PCIe link quality",
+          "bestFor": "Live GPU metrics for ops dashboards, configure ECC/page-retirement policies, group GPUs for monitoring scope",
+          "exampleCommand": "dcgmi dmon -e 100,101,155,140 -d 1000",
+          "permissions": "user (most queries) / root for policy",
+          "relatedTools": ["dcgm-exporter", "nvidia-smi"]
+        },
+        {
+          "name": "dcgm-exporter",
+          "tagline": "Prometheus exporter",
+          "description": "Exports DCGM metrics in Prometheus format — daemonset deployed by GPU Operator for K8s, systemd service for Slurm",
+          "bestFor": "Wire GPU metrics into Prometheus/Grafana, alert on ECC errors, build chargeback dashboards per project",
+          "exampleCommand": "curl http://node:9400/metrics",
+          "permissions": "service account",
+          "relatedTools": ["dcgmi", "gpu-operator"]
+        }
+      ]
+    },
+    {
+      "id": "fabric-storage",
+      "name": "Fabric & Storage",
+      "icon": "🌐",
+      "description": "NVLink/NVSwitch fabric (Fabric Manager), InfiniBand health, and AI storage stack troubleshooting — critical for NCCL performance",
+      "quickRule": "NVLink/NVSwitch? nv-fabricmanager. IB port? ibstat. IB perf? ib_write_bw. Filesystem perf? fio / ior.",
+      "tools": [
+        {
+          "name": "nv-fabricmanager",
+          "tagline": "NVSwitch fabric",
+          "description": "NVIDIA Fabric Manager service that configures NVSwitch on HGX/DGX systems — required for full NVLink mesh between GPUs",
+          "bestFor": "Verify FM is running before NCCL jobs, troubleshoot NVLink topology issues, restart FM after driver updates",
+          "exampleCommand": "systemctl status nvidia-fabricmanager",
+          "permissions": "root",
+          "relatedTools": ["nvidia-smi nvlink", "dcgmi"]
+        },
+        {
+          "name": "ibstat",
+          "tagline": "IB port status",
+          "description": "Show InfiniBand HCA port state — Active/Down, link layer, rate (200/400Gb), LID assignment",
+          "bestFor": "First check when NCCL is slow, validate all IB ports are Active and at expected rate post-install",
+          "exampleCommand": "ibstat",
+          "permissions": "user",
+          "relatedTools": ["ibdiagnet", "ib_write_bw"]
+        },
+        {
+          "name": "ib_write_bw",
+          "tagline": "IB bandwidth test",
+          "description": "Point-to-point InfiniBand RDMA write bandwidth benchmark — validate end-to-end fabric performance between two nodes",
+          "bestFor": "Validate fabric BW matches expected line-rate, isolate slow links/cables, pre-deployment acceptance test",
+          "exampleCommand": "ib_write_bw -d mlx5_0   # on one node, then ib_write_bw -d mlx5_0 <peer-ip> on other",
+          "permissions": "user",
+          "relatedTools": ["ibstat", "ib_send_bw"]
+        },
+        {
+          "name": "ibdiagnet",
+          "tagline": "Fabric diagnostics",
+          "description": "Mellanox fabric-wide diagnostic — scans subnet for errors, link quality, routing, congestion",
+          "bestFor": "Post-install fabric audit, find bad cables/ports across the cluster, recurring port-error investigation",
+          "exampleCommand": "ibdiagnet --pc",
+          "permissions": "root",
+          "relatedTools": ["ibstat", "ib_write_bw"]
+        },
+        {
+          "name": "fio",
+          "tagline": "Storage benchmark",
+          "description": "Flexible I/O tester for measuring storage throughput/IOPS/latency on shared filesystems (Lustre, GPFS, BeeGFS, WekaFS)",
+          "bestFor": "Pre-flight storage validation, baseline performance for AI training datasets, isolate slow-IO complaints",
+          "exampleCommand": "fio --name=read --rw=read --bs=1M --size=10G --numjobs=16 --runtime=60",
+          "permissions": "user",
+          "relatedTools": ["ior", "dd"]
+        }
+      ]
+    }
+  ]
+}

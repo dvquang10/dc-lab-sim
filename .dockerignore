@@ -1,0 +1,58 @@
+# Build output (re-created inside the container)
+dist
+build
+
+# Dependencies (installed inside the container)
+node_modules
+
+# Git
+.git
+.gitignore
+.gitattributes
+.husky
+
+# Test output
+coverage
+playwright-report
+test-results
+.vitest
+.nyc_output
+
+# Editor / IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env (never bake secrets into images — pass at runtime instead)
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Local Claude / agent caches
+.claude/projects
+.claude/cache
+ONBOARDING.md
+
+# Docs / heavy assets not needed at runtime
+docs
+*.md
+!README.md
+
+# CI configs not needed for image build
+.github
+
+# Existing Docker artifacts (avoid re-copying)
+Dockerfile
+docker-compose*.yml
+.dockerignore

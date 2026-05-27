@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useMemo } from "react";
-import commandFamiliesData from "../data/commandFamilies.json";
 import type {
   CommandFamily,
   Tool,
@@ -14,6 +13,7 @@ import type {
 } from "../types/commandFamilies";
 import { useLearningProgressStore } from "@/store/learningProgressStore";
 import { ProgressRing, MasteryBadge } from "./ProgressRing";
+import { useCommandFamiliesData } from "@/utils/useCommandFamilies";
 
 interface CommandFamilyCardsProps {
   /** Show specific family, or all if undefined */
@@ -45,6 +45,7 @@ export const CommandFamilyCards: React.FC<CommandFamilyCardsProps> = ({
   // State for expanded tools within families
   const [expandedTools, setExpandedTools] = useState<ExpandedToolState>({});
 
+  const commandFamiliesData = useCommandFamiliesData();
   // Get families to display
   const families = useMemo(() => {
     const data = commandFamiliesData as CommandFamiliesData;
@@ -53,7 +54,7 @@ export const CommandFamilyCards: React.FC<CommandFamilyCardsProps> = ({
       return family ? [family] : [];
     }
     return data.families;
-  }, [familyId]);
+  }, [familyId, commandFamiliesData]);
 
   // Toggle family expansion (for reference mode)
   const toggleFamily = (id: string) => {

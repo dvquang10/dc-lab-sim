@@ -1,0 +1,675 @@
+{
+  "examId": "ncp-aio-practice",
+  "title": "NCP-AIO Practice Examination",
+  "description": "Practice exam for NVIDIA Certified Professional - AI Operations (NCP-AIO) certification. Covers Installation & Deployment, Administration, Workload Management, and Troubleshooting & Optimization, weighted per the official blueprint.",
+  "duration": 120,
+  "passingScore": 70,
+  "domainWeights": {
+    "domain1": 31,
+    "domain2": 23,
+    "domain3": 23,
+    "domain4": 23
+  },
+  "questions": [
+    {
+      "id": "aio-q001",
+      "domain": "domain1",
+      "questionText": "Which BCM tool is best suited for scripted, non-interactive provisioning of compute nodes from a deployment pipeline?",
+      "type": "multiple-choice",
+      "choices": [
+        "cmsh with -c flag",
+        "Base View web UI",
+        "cmha",
+        "cm-create-image"
+      ],
+      "correctAnswer": 0,
+      "explanation": "cmsh supports non-interactive mode via the -c flag, which makes it the standard tool for scripted automation against BCM. Base View is click-through; cmha is for head-node HA; cm-create-image builds images.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-q002",
+      "domain": "domain1",
+      "questionText": "After a BCM software image is updated with a new NVIDIA driver, what is required for existing compute nodes to actually run the new driver?",
+      "type": "multiple-choice",
+      "choices": [
+        "Run cmha sync",
+        "Run helm upgrade",
+        "Reprovision (reboot under PXE) the nodes so they pick up the updated image",
+        "Restart Base View"
+      ],
+      "correctAnswer": 2,
+      "explanation": "BCM-managed compute nodes pull the image at provisioning time. Updating the image affects new boots — existing running nodes must be reprovisioned (re-PXE) to actually run the new driver.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q003",
+      "domain": "domain1",
+      "questionText": "Which NVIDIA operator is responsible for deploying MOFED, the RDMA shared device plugin, and Multus on a Kubernetes cluster?",
+      "type": "multiple-choice",
+      "choices": [
+        "GPU Operator",
+        "Network Operator",
+        "DOCA Operator",
+        "Cluster API Provider"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The NVIDIA Network Operator deploys the RDMA/Mellanox stack (MOFED, NV peer memory, RDMA shared device plugin, Multus). The GPU Operator handles drivers/toolkit/device-plugin for GPUs.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q004",
+      "domain": "domain1",
+      "questionText": "What is the recommended way to install the NVIDIA GPU Operator on a fresh Kubernetes cluster?",
+      "type": "multiple-choice",
+      "choices": [
+        "kubectl apply -f single manifest from GitHub",
+        "helm install via the nvidia helm repo",
+        "Copy /usr/share/gpu-operator to the worker nodes",
+        "Compile from source on each node"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NVIDIA distributes the GPU Operator as a Helm chart. `helm install gpu-operator nvidia/gpu-operator -n gpu-operator --create-namespace` is the supported install path.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-q005",
+      "domain": "domain1",
+      "questionText": "Where does DOCA Services run on a BlueField DPU-enabled host?",
+      "type": "multiple-choice",
+      "choices": [
+        "On the x86 host OS as a kernel module",
+        "Inside containers running on the BlueField DPU's Arm cores",
+        "On the BMC firmware",
+        "As a Helm chart on the Kubernetes control plane"
+      ],
+      "correctAnswer": 1,
+      "explanation": "DOCA Services run as containers on the BlueField DPU's Arm cores (the DPU runs its own OS). This offloads networking/security/storage functions from the host x86 CPUs.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q006",
+      "domain": "domain1",
+      "questionText": "Which BCM command would you use to verify config sync between the active and passive head nodes?",
+      "type": "multiple-choice",
+      "choices": [
+        "cmsh -c 'partition list'",
+        "cmha status",
+        "systemctl status cmd",
+        "base-view"
+      ],
+      "correctAnswer": 1,
+      "explanation": "cmha status reports the HA state and config-sync timestamp between head nodes. cmsh and Base View can show config but not HA replication state.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-q007",
+      "domain": "domain1",
+      "questionText": "A Slurm cluster managed by BCM needs the slurmctld service to fail over with the head node. Which BCM concept enables this?",
+      "type": "multiple-choice",
+      "choices": [
+        "Software image categories",
+        "Head-node High Availability (cmha)",
+        "Run:ai project quotas",
+        "MIG mode"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Head-node HA in BCM is what allows critical services like slurmctld to run on the active head and fail over to the passive head on outage. The standby head also stores a replicated copy of the Slurm state.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q008",
+      "domain": "domain1",
+      "questionText": "When installing Run:ai on Kubernetes, which prerequisite must be in place on every GPU node first?",
+      "type": "multiple-choice",
+      "choices": [
+        "Run:ai CLI installed",
+        "NVIDIA GPU Operator (drivers, container toolkit, device plugin)",
+        "Magnum IO 2.x",
+        "ipmitool"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Run:ai sits on top of Kubernetes and consumes the standard nvidia.com/gpu resource that the GPU Operator's device plugin exposes. Without the GPU Operator (or equivalent), Run:ai has no GPUs to schedule.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q009",
+      "domain": "domain1",
+      "questionText": "On a BCM-managed cluster, which file describes node-to-category bindings?",
+      "type": "multiple-choice",
+      "choices": [
+        "/etc/slurm/slurm.conf",
+        "BCM's cluster database (accessed via cmsh / Base View)",
+        "/etc/hosts",
+        "kubeconfig"
+      ],
+      "correctAnswer": 1,
+      "explanation": "BCM stores cluster configuration (nodes, categories, networks, images, monitoring policies) in its own database — accessed via cmsh or Base View. It is not a flat config file.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q010",
+      "domain": "domain1",
+      "questionText": "Which is the correct order of post-install validation for a new GPU compute node?",
+      "type": "multiple-choice",
+      "choices": [
+        "Run NCCL test, then nvidia-smi, then ibstat",
+        "nvidia-smi (driver + GPUs present), ibstat (IB ports Active), then dcgmi diag / NCCL bandwidth",
+        "Submit a production job, then debug failures",
+        "Run helm install first, then check hardware"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Validate the lowest layers first: driver/GPUs visible (nvidia-smi), networking up at expected rate (ibstat), then run health and performance tests (dcgmi diag, NCCL). Only after that should production work land.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q011",
+      "domain": "domain1",
+      "questionText": "What does Mission Control toolkit primarily address in NVIDIA AI infrastructure?",
+      "type": "multiple-choice",
+      "choices": [
+        "Single-node GPU drivers",
+        "Unified operations control across NVIDIA AI factories — provisioning, monitoring, and lifecycle management",
+        "Container image building",
+        "PCIe switch firmware"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Mission Control is NVIDIA's operations and orchestration toolkit for AI factories, providing a unified view across BCM-managed clusters for provisioning, monitoring, workload management, and lifecycle operations.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q012",
+      "domain": "domain1",
+      "questionText": "Best practice for image management in BCM is to:",
+      "type": "multiple-choice",
+      "choices": [
+        "Edit running compute nodes directly with rsync from the head node",
+        "Build versioned software images with cm-create-image, test in a staging category, then roll to production category",
+        "Allow each node to install packages on its own at boot",
+        "Use Base View to live-edit the kernel"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The standard BCM workflow is image-based: build/update images with cm-create-image, bind them to categories, and test in a staging category before promoting. This keeps nodes reproducible and avoids drift.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+
+    {
+      "id": "aio-q013",
+      "domain": "domain2",
+      "questionText": "Which Slurm command creates a new account with a GrpTRES GPU quota?",
+      "type": "multiple-choice",
+      "choices": [
+        "scontrol create account",
+        "sacctmgr add account ... && sacctmgr modify account ... set GrpTRES=gres/gpu=N",
+        "sbatch --create-account",
+        "squeue --add-account"
+      ],
+      "correctAnswer": 1,
+      "explanation": "sacctmgr is the user/account/quota administration tool. Adding the account and then setting GrpTRES=gres/gpu=N is the standard pattern. scontrol manages live cluster objects, not the accounting DB.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-q014",
+      "domain": "domain2",
+      "questionText": "How does Run:ai represent organizational hierarchy and quotas?",
+      "type": "multiple-choice",
+      "choices": [
+        "kubectl Namespaces only",
+        "Run:ai Departments contain Projects; Projects hold quotas and over-quota policy",
+        "Linux user groups",
+        "Slurm partitions"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Run:ai uses Departments as the org-level grouping and Projects under them. Projects hold the GPU quota, fairness weights, and over-quota policy (whether they may burst into other projects' idle GPUs).",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q015",
+      "domain": "domain2",
+      "questionText": "What is the role of the MIG Manager component in the NVIDIA GPU Operator?",
+      "type": "multiple-choice",
+      "choices": [
+        "Builds NVIDIA drivers from source",
+        "Reconciles desired MIG partition layout from a node label and applies it",
+        "Manages BCM head-node HA",
+        "Exports DCGM metrics to Prometheus"
+      ],
+      "correctAnswer": 1,
+      "explanation": "GPU Operator's MIG Manager watches a node label (e.g. nvidia.com/mig.config) and applies the matching MIG partition layout via nvidia-smi. It also tells the device plugin which MIG strategy to use.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q016",
+      "domain": "domain2",
+      "questionText": "Which Slurm node state allows running jobs to finish but blocks new jobs from being scheduled?",
+      "type": "multiple-choice",
+      "choices": ["DOWN", "DRAIN", "IDLE", "FAIL"],
+      "correctAnswer": 1,
+      "explanation": "DRAIN tells the scheduler to stop placing new jobs on the node while permitting any currently running job to complete normally. DOWN forcibly removes the node from scheduling.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-q017",
+      "domain": "domain2",
+      "questionText": "On an H100 GPU, which MIG profile id corresponds to the smallest single GPU instance (1g.10gb)?",
+      "type": "multiple-choice",
+      "choices": ["Profile 0", "Profile 9", "Profile 19", "Profile 7g.80gb"],
+      "correctAnswer": 2,
+      "explanation": "Profile 19 on H100 is the 1g.10gb GPU Instance — the smallest slice. nvidia-smi mig -lgip lists the full mapping per GPU generation.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q018",
+      "domain": "domain2",
+      "questionText": "Where do you set per-team GPU quotas when using Run:ai on Kubernetes?",
+      "type": "multiple-choice",
+      "choices": [
+        "kubectl namespace ResourceQuota",
+        "Run:ai Project resource (CRD or UI)",
+        "kubelet --gpu-limit",
+        "BCM cmsh"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Run:ai-managed clusters use the Project CRD for quotas, fairness, and over-quota policy. The native K8s ResourceQuota is bypassed by Run:ai's scheduler in favor of project quotas.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q019",
+      "domain": "domain2",
+      "questionText": "Which Slurm setting most directly enables fair-share scheduling across accounts?",
+      "type": "multiple-choice",
+      "choices": [
+        "PriorityType=priority/basic + uniform priorities",
+        "PriorityType=priority/multifactor with FairShare weight, plus per-account fairshare values in sacctmgr",
+        "Random priority assignment",
+        "DefMemPerCPU"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Fair-share requires PriorityType=priority/multifactor and a non-zero FairShare priority weight, combined with fairshare values configured per account in sacctmgr. Without multifactor, the scheduler can't weight historical usage.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q020",
+      "domain": "domain2",
+      "questionText": "What is the canonical Kubernetes object that exposes GPU capacity to schedulers?",
+      "type": "multiple-choice",
+      "choices": [
+        "ConfigMap",
+        "The Node's allocatable.nvidia.com/gpu (set by the device plugin)",
+        "Pod's spec.containers.image",
+        "Service of type LoadBalancer"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The NVIDIA device plugin (managed by GPU Operator) advertises GPUs by patching each Node's status with allocatable.nvidia.com/gpu. The scheduler then matches pod resource requests against that field.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q021",
+      "domain": "domain2",
+      "questionText": "AI data center reference architectures (DGX SuperPOD, BasePOD) typically organize storage into which two tiers?",
+      "type": "multiple-choice",
+      "choices": [
+        "RAM and swap only",
+        "A high-throughput parallel filesystem for training data + a capacity/object tier for model artifacts and archives",
+        "USB and CDROM",
+        "BMC NVRAM and BIOS"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Reference architectures separate a high-throughput parallel filesystem (Lustre/GPFS/WekaFS) for training datasets and checkpoints from a capacity/object tier (S3-compatible) for long-term artifacts.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q022",
+      "domain": "domain2",
+      "questionText": "On a Slurm cluster integrated with BCM, where would you typically edit slurm.conf so the change survives a reprovision?",
+      "type": "multiple-choice",
+      "choices": [
+        "/etc/slurm/slurm.conf on every compute node by hand",
+        "Through BCM's WLM management (cmsh wlm or Base View) so the change is part of the cluster database and pushed to images",
+        "/tmp/slurm.conf",
+        "It can't be changed once provisioned"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Editing slurm.conf on individual compute nodes is wiped at the next reprovision. BCM's WLM management is the source of truth — changes there are persisted in the cluster DB and rolled into images.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+
+    {
+      "id": "aio-q023",
+      "domain": "domain3",
+      "questionText": "Which Slurm sbatch flag specifies that a job needs 4 GPUs?",
+      "type": "multiple-choice",
+      "choices": ["--cpus=4", "--gres=gpu:4", "--mem=4G", "--time=4:00"],
+      "correctAnswer": 1,
+      "explanation": "--gres=gpu:N is the standard Slurm GRES request for GPUs. Many clusters also allow --gpus=N as a shorthand if configured. --cpus, --mem, and --time are unrelated to GPU count.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-q024",
+      "domain": "domain3",
+      "questionText": "How does Pyxis integrate containers with Slurm jobs?",
+      "type": "multiple-choice",
+      "choices": [
+        "It replaces the slurmd daemon",
+        "It is a SPANK plugin that adds --container-image to srun/sbatch and runs the container under Enroot",
+        "It is a Kubernetes scheduler",
+        "It is a Helm chart"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Pyxis is a Slurm SPANK plugin that adds container-aware flags (--container-image, --container-mounts) to srun/sbatch and uses Enroot as the unprivileged container runtime.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q025",
+      "domain": "domain3",
+      "questionText": "What is the right Run:ai workload type for an LLM inference endpoint that must auto-scale based on request traffic?",
+      "type": "multiple-choice",
+      "choices": [
+        "Training workload",
+        "Interactive workload",
+        "Inference workload (scale-to-zero, autoscaling)",
+        "Distributed training"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Run:ai's Inference workload type uses KServe/Knative under the hood to provide autoscaling and scale-to-zero, designed exactly for traffic-driven LLM endpoints.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q026",
+      "domain": "domain3",
+      "questionText": "Which Slurm command shows you why a queued job is currently NOT running?",
+      "type": "multiple-choice",
+      "choices": [
+        "squeue (look at the REASON column)",
+        "sbatch --explain",
+        "scancel",
+        "sinfo --pending"
+      ],
+      "correctAnswer": 0,
+      "explanation": "squeue's REASON column (formatted as %R) explains why a pending job is waiting — Resources, Priority, QOSMaxGRES, ReqNodeNotAvail, AssocGrpGRES, etc. It's the first place to check.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "aio-q027",
+      "domain": "domain3",
+      "questionText": "What does ngc registry image pull do that docker pull does NOT do natively?",
+      "type": "multiple-choice",
+      "choices": [
+        "Run the container",
+        "Authenticate using NGC org/team context and rotate tokens",
+        "Convert to Enroot squashfs",
+        "Configure InfiniBand"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The ngc CLI handles NGC-specific authentication (org/team, API key management, token rotation). docker pull works against NGC after you've already logged in but does not natively manage NGC org/team context.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q028",
+      "domain": "domain3",
+      "questionText": "What is the role of NIM (NVIDIA Inference Microservices)?",
+      "type": "multiple-choice",
+      "choices": [
+        "A Slurm scheduler plugin",
+        "Production-ready prepackaged inference microservices (often Triton/TRT-LLM) shipped via NGC, deployable on K8s with Run:ai or directly with helm",
+        "A storage filesystem",
+        "A BMC interface"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NIMs are NVIDIA Inference Microservices — prepackaged, optimized inference containers (commonly using Triton/TRT-LLM) distributed via NGC and deployable via Helm or Run:ai inference workloads.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q029",
+      "domain": "domain3",
+      "questionText": "A 32-GPU training job is requested but the user belongs to an account with GrpTRES=gres/gpu=16. What happens?",
+      "type": "multiple-choice",
+      "choices": [
+        "The job runs anyway",
+        "The job is accepted but stays pending indefinitely with reason like AssocGrpGRES",
+        "Slurm crashes",
+        "Other users get throttled"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The job is accepted into the queue but blocked by the association's group quota — squeue's REASON will indicate the QOS or association GRES limit. The fix is to raise the quota or split the job.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q030",
+      "domain": "domain3",
+      "questionText": "What is gang scheduling in the Run:ai context?",
+      "type": "multiple-choice",
+      "choices": [
+        "Scheduling multiple users on a single GPU",
+        "Scheduling all pods of a distributed workload together — start all-or-none to prevent deadlocks in multi-pod training",
+        "Sequential scheduling of inference replicas",
+        "Power capping"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Gang scheduling guarantees all pods of a distributed training workload are scheduled together or not at all, avoiding partial allocations that would deadlock waiting for peers. Run:ai's scheduler enforces this natively.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q031",
+      "domain": "domain3",
+      "questionText": "Which environment variable typically tells NCCL which network interface to use for inter-node traffic?",
+      "type": "multiple-choice",
+      "choices": [
+        "NCCL_HOST",
+        "NCCL_SOCKET_IFNAME",
+        "NCCL_GPU_LIST",
+        "NCCL_TCP"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NCCL_SOCKET_IFNAME (and complementary NCCL_IB_HCA for IB) constrain which interfaces NCCL uses. Misconfiguration here is a classic cause of unexpected bandwidth drops or hangs on multi-NIC nodes.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q032",
+      "domain": "domain3",
+      "questionText": "Where should the operator look first when a Run:ai workload appears 'stuck' in the UI?",
+      "type": "multiple-choice",
+      "choices": [
+        "BMC sensor logs",
+        "Underlying kubectl pod events and node descriptions for scheduler reasons (Insufficient nvidia.com/gpu, Taint mismatch, image pull errors)",
+        "IB switch logs",
+        "Storage RAID status"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Run:ai sits on Kubernetes — when its UI shows a workload stuck, the underlying truth is usually in kubectl describe pod / kubectl get events, which reveal the actual K8s scheduling or runtime issue.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+
+    {
+      "id": "aio-q033",
+      "domain": "domain4",
+      "questionText": "NCCL allreduce bandwidth on HGX H100 drops from ~370 GB/s to ~45 GB/s. What service should you check first?",
+      "type": "multiple-choice",
+      "choices": [
+        "slurmctld",
+        "nvidia-fabricmanager (NVSwitch)",
+        "kubelet",
+        "Docker daemon"
+      ],
+      "correctAnswer": 1,
+      "explanation": "An 8x drop on HGX is the classic NVLink → PCIe fallback signature, which happens when Fabric Manager isn't running. systemctl status nvidia-fabricmanager is the first check.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q034",
+      "domain": "domain4",
+      "questionText": "Pods requesting nvidia.com/gpu stay Pending forever. kubectl describe node shows allocatable.nvidia.com/gpu = 0. Most likely cause?",
+      "type": "multiple-choice",
+      "choices": [
+        "The cluster is in maintenance",
+        "The NVIDIA device plugin (part of GPU Operator) isn't running or hasn't completed validation on that node",
+        "Helm needs a restart",
+        "Pyxis is missing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "When allocatable GPUs is 0 on a node that has GPUs, the device plugin daemonset has either failed to schedule, failed validation, or driver readiness is incomplete. Inspect the GPU Operator pods on that node.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q035",
+      "domain": "domain4",
+      "questionText": "Sporadic NCCL hangs across multiple nodes suggest a flapping fabric link. Which tool gives a cluster-wide port-error report in one command?",
+      "type": "multiple-choice",
+      "choices": [
+        "ibstat",
+        "ib_write_bw",
+        "ibdiagnet --pc",
+        "nv-fabricmanager"
+      ],
+      "correctAnswer": 2,
+      "explanation": "ibdiagnet --pc scans the whole subnet and dumps port-counter errors per port. ibstat is per-host; ib_write_bw is a benchmark; nv-fabricmanager is NVSwitch, not IB.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q036",
+      "domain": "domain4",
+      "questionText": "A docker run with --gpus all returns 'could not select device driver \"\" with capabilities: [[gpu]]'. Root cause is usually:",
+      "type": "multiple-choice",
+      "choices": [
+        "Missing or broken NVIDIA Container Toolkit / runtime configuration",
+        "Incorrect Slurm partition",
+        "Helm chart values typo",
+        "MIG is enabled"
+      ],
+      "correctAnswer": 0,
+      "explanation": "This error means the Docker daemon doesn't know how to dispatch GPU containers — typically because the NVIDIA Container Toolkit isn't installed or /etc/docker/daemon.json isn't configured with the nvidia runtime.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q037",
+      "domain": "domain4",
+      "questionText": "A user reports storage throughput is 1/10 of expected on the parallel filesystem during a training run. Best first diagnostic:",
+      "type": "multiple-choice",
+      "choices": [
+        "Reinstall the driver",
+        "Run fio (or ior) from a compute node against the parallel filesystem to baseline raw throughput, decoupling it from the training code",
+        "Restart Base View",
+        "Cycle the BMC"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Isolate the filesystem from the application by running fio/ior directly. If raw throughput is also low, the issue is in storage/network; if raw throughput is fine, the issue is in the training I/O pattern.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q038",
+      "domain": "domain4",
+      "questionText": "BCM Base View shows several nodes in 'INSTALLING' state forever. Most common root causes are:",
+      "type": "multiple-choice",
+      "choices": [
+        "Slurm priority misconfiguration",
+        "DHCP/PXE/TFTP misconfiguration, network mismatch, or the image server is unreachable from the compute network",
+        "Run:ai license expiration",
+        "MIG is disabled"
+      ],
+      "correctAnswer": 1,
+      "explanation": "INSTALLING means PXE handshake succeeded but the node can't progress through the install — almost always DHCP/PXE/TFTP issues, wrong VLAN, or unreachable image server. cmsh logs and tcpdump on the head node are diagnostic.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q039",
+      "domain": "domain4",
+      "questionText": "After a driver upgrade, nvidia-fabricmanager fails to start with 'driver version mismatch'. Resolution:",
+      "type": "multiple-choice",
+      "choices": [
+        "Disable MIG",
+        "Install the matching nvidia-fabricmanager package version that aligns with the running NVIDIA driver",
+        "Reformat the storage",
+        "Replace the GPU"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Fabric Manager is tightly coupled to the driver. After a driver bump you must install/upgrade the FM package whose version matches — otherwise the service fails its handshake check at startup.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q040",
+      "domain": "domain4",
+      "questionText": "Magnum IO is best described as:",
+      "type": "multiple-choice",
+      "choices": [
+        "A standalone storage filesystem",
+        "NVIDIA's umbrella stack for I/O acceleration (GPUDirect Storage, GPUDirect RDMA, NCCL, UCX, NVSHMEM) optimizing data movement for AI/HPC",
+        "A Slurm prolog script",
+        "A Kubernetes ingress controller"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Magnum IO is the NVIDIA stack of I/O acceleration technologies including GPUDirect Storage, GPUDirect RDMA, NCCL, UCX, and NVSHMEM. Troubleshooting AI I/O performance means knowing which of these is involved.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "aio-q041",
+      "domain": "domain4",
+      "questionText": "An NGC container pull fails with 'unauthorized: authentication required' even though docker login was used. Likely fix:",
+      "type": "multiple-choice",
+      "choices": [
+        "Add the GPU to the docker group",
+        "Refresh the NGC API key (it may be expired or scoped to a different org/team) and re-login; for private images, use the ngc CLI to verify org context",
+        "Recompile Docker",
+        "Restart slurmctld"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Unauthorized after login usually means the key is expired, the user lacks org/team access, or the image is private to a different org. The ngc CLI lets you verify and rotate keys against the correct org/team scope.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "aio-q042",
+      "domain": "domain4",
+      "questionText": "Storage performance is fine in benchmarks but real training jobs are I/O bound. Most likely AI-specific issue:",
+      "type": "multiple-choice",
+      "choices": [
+        "GPU clocks are too low",
+        "Dataset access pattern (small file random reads, no caching, no GPUDirect Storage) — sequential benchmarks don't capture the actual workload",
+        "Slurm priority is misconfigured",
+        "Run:ai is over-allocated"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Synthetic sequential I/O benchmarks (fio default) often look healthy while real AI workloads suffer from small-file random reads, dataloader bottlenecks, or lack of GPUDirect Storage. Profile the real I/O pattern.",
+      "points": 1,
+      "difficulty": "advanced"
+    }
+  ]
+}
